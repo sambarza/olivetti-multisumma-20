@@ -1,0 +1,26 @@
+### Positive number
+GET http://127.0.0.1:8000/double/5
+
+### Negative number
+GET http://127.0.0.1:8000/double/-3
+
+### Zero
+GET http://127.0.0.1:8000/double/0
+
+### Large number
+GET http://127.0.0.1:8000/double/999999999
+
+### Very large number (near max int)
+GET http://127.0.0.1:8000/double/9999999999999999999
+
+### Invalid input: string instead of number (expects 422)
+GET http://127.0.0.1:8000/double/abc
+
+### Invalid input: float instead of integer (expects 422)
+GET http://127.0.0.1:8000/double/3.14
+
+### Invalid input: empty parameter (expects 404)
+GET http://127.0.0.1:8000/double/
+
+### Invalid input: special characters (expects 422)
+GET http://127.0.0.1:8000/double/@!#
