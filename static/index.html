@@ -54,7 +54,7 @@
         .receipt-container {
             position: absolute;
             /* Centered on the printer roller slot */
-            top: 14.5%;
+            top: 13%;
             left: 28%;
             width: 30%;
             z-index: 10;
@@ -62,7 +62,7 @@
             /* Fixed visible window — paper scrolls behind this */
             overflow: hidden;
             /* Height of the visible paper area in the photo */
-            height: 13.5%;
+            height: 15%;
         }
 
         .receipt {
@@ -437,14 +437,15 @@
         function onSignIn(response) {
             idToken = response.credential;
             var payload = JSON.parse(atob(idToken.split(".")[1]));
+            showCalculator(payload.email);
+        }
 
-            // Hide login, show calculator UI
+        function showCalculator(email) {
             document.getElementById("login-overlay").style.display = "none";
             var bar = document.getElementById("user-bar");
             bar.style.display = "block";
-            bar.textContent = payload.email;
+            bar.textContent = email || "test mode";
 
-            // Show all calculator elements
             document.querySelectorAll(".calc-hidden").forEach(function(el) {
                 el.classList.remove("calc-hidden");
             });
@@ -452,6 +453,7 @@
                 el.classList.remove("btn-hidden");
             });
         }
+
 
         /* ══════════════════════════════════════════════════════════
            DISPLAY
