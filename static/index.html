@@ -114,36 +114,6 @@
         }
 
 
-        /* ══════════════════════════════════════════════════════════
-           REGISTER DISPLAY OVERLAY
-           Sits on top of the real display window in the photo.
-           Semi-transparent to blend with the actual display.
-           ══════════════════════════════════════════════════════════ */
-        .display-overlay {
-            position: absolute;
-            /* Mapped to the display window position in the photo */
-            left: 15%;
-            top: 53.5%;
-            width: 24%;
-            height: 2.8%;
-            /* Blend with the real display */
-            background: rgba(160, 160, 140, 0.55);
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 4px;
-            font-family: "Courier New", monospace;
-            font-size: clamp(0.6em, 2.5vw, 1em);
-            font-weight: 700;
-            color: #1a1a1a;
-            letter-spacing: 2px;
-            z-index: 5;
-            border-radius: 1px;
-            text-shadow: 0 0 1px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .display-overlay.err { color: #a01010; }
 
         /* ══════════════════════════════════════════════════════════
            INVISIBLE BUTTON OVERLAYS
@@ -251,7 +221,6 @@
             body { padding: 10px; }
             .receipt { font-size: 0.6em; max-height: 160px; }
             .receipt-container { top: 12%; }
-            .display-overlay { font-size: 0.6em; }
         }
     </style>
 </head>
@@ -281,8 +250,6 @@
             <div class="receipt" id="receipt"></div>
         </div>
 
-        <!-- ════ REGISTER DISPLAY OVERLAY ════ -->
-        <div class="display-overlay calc-hidden" id="display">0</div>
 
         <!-- ════════════════════════════════════════════════════════
              BUTTON OVERLAYS
@@ -498,17 +465,8 @@
         /* ══════════════════════════════════════════════════════════
            DISPLAY
            ══════════════════════════════════════════════════════════ */
-        function updateDisplay(v) {
-            var el = document.getElementById("display");
-            el.textContent = v;
-            el.classList.remove("err");
-        }
-
-        function showError(msg) {
-            var el = document.getElementById("display");
-            el.textContent = msg;
-            el.classList.add("err");
-        }
+        function updateDisplay(v) {}
+        function showError(msg) {}
 
         /* ══════════════════════════════════════════════════════════
            PAPER RECEIPT
