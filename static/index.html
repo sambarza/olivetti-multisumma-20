@@ -671,14 +671,17 @@
         document.addEventListener("keydown", function(e) {
             if (e.repeat) return;
             if (!idToken) return;
-            if (e.key >= "0" && e.key <= "9") { flashByTitle(e.key); pressDigit(e.key); return; }
-            if (e.key === "." || e.key === ",") { pressDigit("."); return; }
-            if (e.key === "+") { flashByTitle("add"); pressOp("add"); return; }
-            if (e.key === "-") { flashByTitle("subtract"); pressOp("subtract"); return; }
-            if (e.key === "*") { flashByTitle("multiply"); pressOp("multiply"); return; }
-            if (e.key === "/") { e.preventDefault(); flashByTitle("divide"); pressOp("divide"); return; }
-            if (e.key === "Enter") { flashByTitle("equals"); pressEquals(); return; }
-            if (e.key === "Escape") { flashByTitle("clear"); pressClear(); return; }
+            var handled = true;
+            if (e.key >= "0" && e.key <= "9") { flashByTitle(e.key); pressDigit(e.key); }
+            else if (e.key === "." || e.key === ",") { pressDigit("."); }
+            else if (e.key === "+") { flashByTitle("add"); pressOp("add"); }
+            else if (e.key === "-") { flashByTitle("subtract"); pressOp("subtract"); }
+            else if (e.key === "*") { flashByTitle("multiply"); pressOp("multiply"); }
+            else if (e.key === "/") { flashByTitle("divide"); pressOp("divide"); }
+            else if (e.key === "Enter") { flashByTitle("equals"); pressEquals(); }
+            else if (e.key === "Escape") { flashByTitle("clear"); pressClear(); }
+            else { handled = false; }
+            if (handled) e.preventDefault();
         });
 
         /* ══════════════════════════════════════════════════════════
