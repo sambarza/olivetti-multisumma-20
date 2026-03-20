@@ -473,12 +473,12 @@
                 spans.push(ch);
             }
             scrollToBottom(false);
-            var i = 0;
+            var i = spans.length - 1;
             function typeNext() {
-                if (i < spans.length) {
+                if (i >= 0) {
                     spans[i].style.visibility = "visible";
                     sndClick();
-                    i++;
+                    i--;
                     setTimeout(typeNext, 30);
                 } else {
                     if (cb) cb();
@@ -630,7 +630,7 @@
                 callAPI(pendingOp, pendingValue, v, function(r) {
                     typeDigits(fmt(r), function() {
                         finalizeLine("=", true);
-                        sndBell();
+        
                         pendingValue = null; pendingOp = null;
                         currentInput = String(r); freshInput = true;
                     });
@@ -648,7 +648,7 @@
                 callAPI(pendingOp, pendingValue, v, function(r) {
                     typeDigits(fmt(r), function() {
                         finalizeLine("\u25c7", true);
-                        sndBell();
+        
                         pendingValue = r; pendingOp = null;
                         currentInput = String(r); freshInput = true;
                     });
@@ -666,7 +666,7 @@
                     callAPI(pendingOp, pendingValue, v, function(r) {
                         typeDigits(fmt(r), function() {
                             finalizeLine("*", true);
-                            sndBell();
+            
                             pendingValue = null; pendingOp = null;
                             currentInput = String(r); freshInput = true;
                         });
