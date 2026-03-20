@@ -200,6 +200,88 @@
             white-space: nowrap;
             pointer-events: none;
         }
+        /* Digit counter overlay */
+        .cfg-counter {
+            position: absolute;
+            border: 2px solid #ff0;
+            background: rgba(255, 255, 0, 0.1);
+            cursor: move;
+            z-index: 8;
+            user-select: none;
+        }
+
+        .cfg-counter .resize-handle {
+            position: absolute;
+            right: -4px;
+            bottom: -4px;
+            width: 12px;
+            height: 12px;
+            background: #ff0;
+            cursor: nwse-resize;
+            border-radius: 1px;
+        }
+
+        .cfg-counter .label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 9px;
+            font-weight: 700;
+            color: #ff0;
+            text-shadow: 0 0 3px #000, 0 0 6px #000;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        /* Marker sample crosshair — shows where the photo is sampled for the marker texture */
+        .cfg-marker-sample {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f60;
+            border-radius: 50%;
+            cursor: move;
+            z-index: 10;
+            user-select: none;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 4px rgba(255, 100, 0, 0.6);
+        }
+
+        .cfg-marker-sample::before,
+        .cfg-marker-sample::after {
+            content: "";
+            position: absolute;
+            background: #f60;
+        }
+
+        .cfg-marker-sample::before {
+            left: 50%;
+            top: -4px;
+            width: 1px;
+            height: calc(100% + 8px);
+            transform: translateX(-50%);
+        }
+
+        .cfg-marker-sample::after {
+            top: 50%;
+            left: -4px;
+            width: calc(100% + 8px);
+            height: 1px;
+            transform: translateY(-50%);
+        }
+
+        .cfg-marker-sample .label {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            font-weight: 700;
+            color: #f60;
+            white-space: nowrap;
+            pointer-events: none;
+            text-shadow: 0 0 3px #000;
+        }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -218,7 +300,7 @@
     </div>
 
     <div class="info">Drag buttons to move. Drag bottom-right corner to resize. Arrow keys for fine-tuning (hold Shift for size).<br>
-    Cyan box = receipt area. Magenta dots = top clip edge (drag up/down to angle the paper cutoff).</div>
+    Cyan box = receipt area. Magenta dots = top clip edge. Yellow box = digit counter. Orange crosshair = marker texture sample point.</div>
     <div class="toolbar">
         <button class="save-btn" onclick="savePositions()">Save</button>
         <button class="reset-btn" onclick="resetPositions()">Reset to defaults</button>
@@ -272,6 +354,11 @@
             rollerZone: 35
         };
 
+        var COUNTER_DEFAULT = {
+            left: 20, top: 52.5, width: 25, height: 2.5,
+            sampleX: 22, sampleY: 52.5
+        };
+
         var wrapper = document.getElementById("wrapper");
         var selectedBtn = null;
 
@@ -282,24 +369,27 @@
             fetch("/api/layout")
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    cb(data && data.buttons && data.buttons.length === DEFAULTS.length
-                       ? data
-                       : migrateOldFormat(data));
+                    var d = (data && data.buttons && data.buttons.length === DEFAULTS.length)
+                       ? data : migrateOldFormat(data);
+                    if (!d.counter) d.counter = Object.assign({}, COUNTER_DEFAULT);
+                    cb(d);
                 })
                 .catch(function() {
                     cb({ buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
-                         receipt: Object.assign({}, RECEIPT_DEFAULT) });
+                         receipt: Object.assign({}, RECEIPT_DEFAULT),
+                         counter: Object.assign({}, COUNTER_DEFAULT) });
                 });
         }
 
         /* Handle old format (array of buttons) */
         function migrateOldFormat(data) {
             if (Array.isArray(data) && data.length === DEFAULTS.length) {
-                return { buttons: data, receipt: Object.assign({}, RECEIPT_DEFAULT) };
+                return { buttons: data, receipt: Object.assign({}, RECEIPT_DEFAULT), counter: Object.assign({}, COUNTER_DEFAULT) };
             }
             return {
                 buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
-                receipt: Object.assign({}, RECEIPT_DEFAULT)
+                receipt: Object.assign({}, RECEIPT_DEFAULT),
+                counter: Object.assign({}, COUNTER_DEFAULT)
             };
         }
 
@@ -326,11 +416,22 @@
                 rollerZone:   parseFloat(rcpt.dataset.rollerZone)
             };
 
+            var cnt = document.querySelector(".cfg-counter");
+            var sample = document.querySelector(".cfg-marker-sample");
+            var counter = {
+                left:    parseFloat(cnt.style.left),
+                top:     parseFloat(cnt.style.top),
+                width:   parseFloat(cnt.style.width),
+                height:  parseFloat(cnt.style.height),
+                sampleX: parseFloat(sample.dataset.sampleX),
+                sampleY: parseFloat(sample.dataset.sampleY)
+            };
+
             if (!idToken) { alert("Please sign in first"); return; }
             fetch("/api/layout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + idToken },
-                body: JSON.stringify({ buttons: buttons, receipt: receipt })
+                body: JSON.stringify({ buttons: buttons, receipt: receipt, counter: counter })
             }).then(function(r) {
                 if (!r.ok) { alert("Save failed — check authentication"); return; }
                 var s = document.getElementById("status");
@@ -343,7 +444,8 @@
             if (!idToken) { alert("Please sign in first"); return; }
             var data = {
                 buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
-                receipt: Object.assign({}, RECEIPT_DEFAULT)
+                receipt: Object.assign({}, RECEIPT_DEFAULT),
+                counter: Object.assign({}, COUNTER_DEFAULT)
             };
             fetch("/api/layout", {
                 method: "POST",
@@ -354,6 +456,10 @@
                 document.querySelectorAll(".cfg-btn").forEach(function(el) { el.remove(); });
                 var oldRcpt = document.querySelector(".cfg-receipt");
                 if (oldRcpt) oldRcpt.remove();
+                var oldCnt = document.querySelector(".cfg-counter");
+                if (oldCnt) oldCnt.remove();
+                var oldSample = document.querySelector(".cfg-marker-sample");
+                if (oldSample) oldSample.remove();
                 buildAll(data);
             });
         }
@@ -566,6 +672,102 @@
         }
 
         /* ══════════════════════════════════════════════════════════
+           BUILD DIGIT COUNTER OVERLAY
+           ══════════════════════════════════════════════════════════ */
+        function buildCounter(counter) {
+            var el = document.createElement("div");
+            el.className = "cfg-counter";
+            el.style.left   = counter.left + "%";
+            el.style.top    = counter.top + "%";
+            el.style.width  = counter.width + "%";
+            el.style.height = counter.height + "%";
+
+            var label = document.createElement("div");
+            label.className = "label";
+            label.textContent = "DIGIT COUNTER";
+            el.appendChild(label);
+
+            var resizeH = document.createElement("div");
+            resizeH.className = "resize-handle";
+            el.appendChild(resizeH);
+
+            el.addEventListener("mousedown", function(e) {
+                if (e.target === resizeH) return;
+                e.preventDefault();
+                startDrag(el, e);
+                updateCounterInfo(el);
+            });
+
+            resizeH.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startResize(el, e);
+                updateCounterInfo(el);
+            });
+
+            wrapper.appendChild(el);
+
+            /* Marker sample crosshair — draggable point on the photo */
+            var sampleX = counter.sampleX || 22;
+            var sampleY = counter.sampleY || 52.5;
+            var cross = document.createElement("div");
+            cross.className = "cfg-marker-sample";
+            cross.style.left = sampleX + "%";
+            cross.style.top  = sampleY + "%";
+            cross.dataset.sampleX = sampleX;
+            cross.dataset.sampleY = sampleY;
+
+            var crossLabel = document.createElement("div");
+            crossLabel.className = "label";
+            crossLabel.textContent = "MARKER SAMPLE";
+            cross.appendChild(crossLabel);
+
+            cross.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startMarkerSampleDrag(cross, e);
+            });
+
+            wrapper.appendChild(cross);
+        }
+
+        function startMarkerSampleDrag(el, e) {
+            var rect = wrapper.getBoundingClientRect();
+            var startX = e.clientX, startY = e.clientY;
+            var origLeft = parseFloat(el.style.left);
+            var origTop  = parseFloat(el.style.top);
+
+            function onMove(e2) {
+                var dx = (e2.clientX - startX) / rect.width * 100;
+                var dy = (e2.clientY - startY) / rect.height * 100;
+                var newX = Math.max(0, Math.min(100, origLeft + dx));
+                var newY = Math.max(0, Math.min(100, origTop + dy));
+                el.style.left = newX.toFixed(2) + "%";
+                el.style.top  = newY.toFixed(2) + "%";
+                el.dataset.sampleX = newX.toFixed(2);
+                el.dataset.sampleY = newY.toFixed(2);
+                var info = document.getElementById("selected-info");
+                info.textContent = "MARKER SAMPLE — x:" + newX.toFixed(1) + "% y:" + newY.toFixed(1) + "%";
+            }
+
+            function onUp() {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            }
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        }
+
+        function updateCounterInfo(el) {
+            var info = document.getElementById("selected-info");
+            info.textContent = "COUNTER — left:" + parseFloat(el.style.left).toFixed(1) +
+                "% top:" + parseFloat(el.style.top).toFixed(1) +
+                "% w:" + parseFloat(el.style.width).toFixed(1) +
+                "% h:" + parseFloat(el.style.height).toFixed(1) + "%";
+        }
+
+        /* ══════════════════════════════════════════════════════════
            SELECTION
            ══════════════════════════════════════════════════════════ */
         function selectBtn(el) {
@@ -595,6 +797,7 @@
             var origLeft = parseFloat(el.style.left);
             var origTop  = parseFloat(el.style.top);
             var isReceipt = el.classList.contains("cfg-receipt");
+            var isCounter = el.classList.contains("cfg-counter");
 
             function onMove(e2) {
                 var dx = (e2.clientX - startX) / rect.width * 100;
@@ -602,6 +805,7 @@
                 el.style.left = (origLeft + dx).toFixed(2) + "%";
                 el.style.top  = (origTop + dy).toFixed(2) + "%";
                 if (isReceipt) updateReceiptInfo(el);
+                else if (isCounter) updateCounterInfo(el);
                 else updateInfo();
             }
 
@@ -623,6 +827,7 @@
             var origW = parseFloat(el.style.width);
             var origH = parseFloat(el.style.height);
             var isReceipt = el.classList.contains("cfg-receipt");
+            var isCounter = el.classList.contains("cfg-counter");
 
             function onMove(e2) {
                 var dw = (e2.clientX - startX) / rect.width * 100;
@@ -632,6 +837,8 @@
                 if (isReceipt) {
                     updateClipHandles(el);
                     updateReceiptInfo(el);
+                } else if (isCounter) {
+                    updateCounterInfo(el);
                 } else {
                     updateInfo();
                 }
@@ -681,6 +888,7 @@
         function buildAll(data) {
             buildButtons(data.buttons);
             buildReceipt(data.receipt);
+            buildCounter(data.counter || COUNTER_DEFAULT);
         }
 
         loadPositions(buildAll);

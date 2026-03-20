@@ -107,6 +107,35 @@
 
 
         /* ══════════════════════════════════════════════════════════
+           DIGIT COUNTER — small line in the display window
+           Slides left as digits are entered, resets on result
+           ══════════════════════════════════════════════════════════ */
+        .digit-counter {
+            position: absolute;
+            /* Over the display window in the photo */
+            left: 20%;
+            top: 52.5%;
+            width: 25%;
+            height: 2.5%;
+            z-index: 5;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .digit-counter .marker {
+            position: absolute;
+            left: 8%;
+            top: 0%;
+            width: 6px;
+            height: 100%;
+            background-image: url('olivetti-front.jpg');
+            background-size: var(--machine-w) var(--machine-h);
+            background-position: var(--marker-bg-x) var(--marker-bg-y);
+            border-radius: 1px;
+            transition: left 0.08s ease-out;
+        }
+
+        /* ══════════════════════════════════════════════════════════
            INVISIBLE BUTTON OVERLAYS
            Transparent buttons positioned exactly over each key
            in the photo. On press, a visual feedback overlay shows.
@@ -223,6 +252,11 @@
         <!-- The real photograph — the only visual base -->
         <img src="olivetti-front.jpg" alt="Olivetti Multisumma 20" class="machine-photo">
 
+
+        <!-- ════ DIGIT COUNTER — marker in the display window ════ -->
+        <div class="digit-counter">
+            <div class="marker" id="digit-marker"></div>
+        </div>
 
         <!-- ════ PAPER RECEIPT — comes out of the printer ════ -->
         <div class="receipt-container">
@@ -415,6 +449,47 @@
         }
 
         /* ══════════════════════════════════════════════════════════
+           DIGIT COUNTER
+           ══════════════════════════════════════════════════════════ */
+        var digitCount = 0;
+        var DIGIT_STEP = 8; // % shift per digit
+
+        function updateDigitMarker() {
+            var marker = document.getElementById("digit-marker");
+            var leftPct;
+            if (digitCount === 0) {
+                leftPct = 8;
+            } else {
+                leftPct = 8 + (10 - digitCount) * DIGIT_STEP;
+            }
+            marker.style.left = leftPct + "%";
+            updateMarkerBg(marker);
+        }
+
+        /* Photo coordinates (%) where the real marker appears in olivetti-front.jpg — loaded from config */
+        var MARKER_PHOTO_X = 22;
+        var MARKER_PHOTO_Y = 52.5;
+
+        /** Set the marker background to always show the same cropped area from the photo. */
+        function updateMarkerBg(marker) {
+            var img = document.querySelector(".machine-photo");
+            if (!img) return;
+            var wW = img.offsetWidth;
+            var wH = img.offsetHeight;
+            var srcX = wW * MARKER_PHOTO_X / 100;
+            var srcY = wH * MARKER_PHOTO_Y / 100;
+            marker.style.setProperty("--machine-w", wW + "px");
+            marker.style.setProperty("--machine-h", wH + "px");
+            marker.style.setProperty("--marker-bg-x", (-srcX) + "px");
+            marker.style.setProperty("--marker-bg-y", (-srcY) + "px");
+        }
+
+        function resetDigitMarker() {
+            digitCount = 0;
+            updateDigitMarker();
+        }
+
+        /* ══════════════════════════════════════════════════════════
            STATE
            ══════════════════════════════════════════════════════════ */
         var API_URL = window.location.origin;
@@ -491,6 +566,7 @@
         function finalizeLine(symbol, isTotal) {
             if (!activeLine) return;
             if (symbol) activeLine.querySelector(".r-op").textContent = symbol;
+            resetDigitMarker();
             if (isTotal) activeLine.classList.add("r-total");
             // Create the next blank line now, so the roll includes it
             activeLine = null;
@@ -590,11 +666,14 @@
             if (freshInput) {
                 currentInput = (d === ".") ? "0." : d;
                 freshInput = false;
+                digitCount = 0;
             } else {
                 if (d === "." && currentInput.indexOf(".") !== -1) return;
                 if (currentInput === "0" && d !== ".") currentInput = d;
                 else currentInput += d;
             }
+            digitCount++;
+            updateDigitMarker();
             updateDisplay(currentInput);
         }
 
@@ -752,6 +831,7 @@
                     /* Handle both old (array) and new ({buttons, receipt}) format */
                     var buttons = Array.isArray(saved) ? saved : (saved.buttons || []);
                     var receipt = saved.receipt || null;
+                    var counter = saved.counter || null;
 
                     /* Apply button positions */
                     if (buttons.length) {
@@ -784,6 +864,19 @@
                             rc.style.webkitClipPath = cp;
                             rc.dataset.rollerZone = receipt.rollerZone || 35;
                         }
+                    }
+                    /* Apply digit counter position and marker sample */
+                    if (counter) {
+                        var dc = document.querySelector(".digit-counter");
+                        if (dc) {
+                            dc.style.left   = counter.left + "%";
+                            dc.style.top    = counter.top + "%";
+                            dc.style.width  = counter.width + "%";
+                            dc.style.height = counter.height + "%";
+                        }
+                        if (counter.sampleX !== undefined) MARKER_PHOTO_X = counter.sampleX;
+                        if (counter.sampleY !== undefined) MARKER_PHOTO_Y = counter.sampleY;
+                        updateDigitMarker();
                     }
                 })
                 .catch(function() {});

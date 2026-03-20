@@ -169,5 +169,13 @@
     "clipTopLeft": 8.5,
     "clipTopRight": 0,
     "rollerZone": 34.6
+  },
+  "counter": {
+    "left": 22.07,
+    "top": 55.78,
+    "width": 19.79,
+    "height": 2.19,
+    "sampleX": 34.71,
+    "sampleY": 55.31
   }
 }
