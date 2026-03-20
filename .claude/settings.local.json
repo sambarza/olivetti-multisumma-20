@@ -24,7 +24,12 @@
       "Bash(ls -la *.jpg)",
       "Bash(sips -g pixelWidth -g pixelHeight /Users/samuelebarzaghi/test/test-claude-code/static/olivetti-front.jpg)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(curl -L -o /Users/samuelebarzaghi/test/test-claude-code/static/olivetti-front.jpg \"https://images.sbito.it/api/v1/sbt-ads-images-pro/images/5d/5df9ccec-7c25-4ffc-a751-1470a5b06500?rule=gallery-desktop-2x-auto\")"
+      "Bash(curl -L -o /Users/samuelebarzaghi/test/test-claude-code/static/olivetti-front.jpg \"https://images.sbito.it/api/v1/sbt-ads-images-pro/images/5d/5df9ccec-7c25-4ffc-a751-1470a5b06500?rule=gallery-desktop-2x-auto\")",
+      "WebFetch(domain:youtu.be)",
+      "WebFetch(domain:www.youtube.com)",
+      "Read(//Users/samuelebarzaghi/temp/**)",
+      "Bash(ffprobe -v quiet -print_format json -show_format -show_streams /Users/samuelebarzaghi/temp/trim.wav)",
+      "Bash(afinfo /Users/samuelebarzaghi/temp/trim.wav)"
     ]
   }
 }

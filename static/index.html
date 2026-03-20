@@ -405,74 +405,85 @@
             return b;
         }
 
-        /** Mechanical key click — sharp snap + body thud. */
+        /** Load the real click sample. */
+        var clickBuffer = null;
+        (function() {
+            fetch("click.wav")
+                .then(function(r) { return r.arrayBuffer(); })
+                .then(function(buf) { return getAC().decodeAudioData(buf); })
+                .then(function(decoded) { clickBuffer = decoded; })
+                .catch(function() { console.warn("Could not load click.wav"); });
+        })();
+
+        /** Play the real recorded key click. */
         function sndClick() {
-            var c = getAC(), t = c.currentTime;
-            // Snap
-            var s = c.createBufferSource(); s.buffer = mkNoise(0.03, 0.4);
-            var f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2800; f.Q.value = 2;
-            var g = c.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
-            s.connect(f); f.connect(g); g.connect(c.destination); s.start(t); s.stop(t + 0.035);
-            // Thud
-            var o = c.createOscillator(); o.type = "sine"; o.frequency.value = 140;
-            var g2 = c.createGain(); g2.gain.setValueAtTime(0.07, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-            o.connect(g2); g2.connect(c.destination); o.start(t); o.stop(t + 0.06);
+            if (!clickBuffer) return;
+            var c = getAC();
+            var src = c.createBufferSource();
+            src.buffer = clickBuffer;
+            src.connect(c.destination);
+            src.start();
         }
 
-        /** Print sound — motor whir + hammer strike + paper ratchet. */
-        function sndPrint() {
+        /** Load the real strike sample and decode it for Web Audio playback. */
+        var strikeBuffer = null;
+        (function() {
+            fetch("strike.wav")
+                .then(function(r) { return r.arrayBuffer(); })
+                .then(function(buf) { return getAC().decodeAudioData(buf); })
+                .then(function(decoded) { strikeBuffer = decoded; })
+                .catch(function() { console.warn("Could not load strike.wav"); });
+        })();
+
+        /** Play the real recorded strike sample. */
+        function sndStrike() {
+            if (!strikeBuffer) { sndClick(); return; }
+            var c = getAC();
+            var src = c.createBufferSource();
+            src.buffer = strikeBuffer;
+            src.connect(c.destination);
+            src.start();
+        }
+
+        /** Paper advance sound — after all digits are printed. */
+        function sndAdvance() {
             var c = getAC(), t = c.currentTime;
-            // Motor
-            var mo = c.createOscillator(); mo.type = "sawtooth";
-            mo.frequency.setValueAtTime(70, t); mo.frequency.linearRampToValueAtTime(120, t + 0.06);
-            mo.frequency.linearRampToValueAtTime(45, t + 0.22);
-            var mf = c.createBiquadFilter(); mf.type = "lowpass"; mf.frequency.value = 350;
-            var mg = c.createGain(); mg.gain.setValueAtTime(0.06, t);
-            mg.gain.linearRampToValueAtTime(0.11, t + 0.04);
-            mg.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
-            mo.connect(mf); mf.connect(mg); mg.connect(c.destination); mo.start(t); mo.stop(t + 0.25);
-            // Hammer
-            var hs = c.createBufferSource(); hs.buffer = mkNoise(0.018, 0.5);
-            var hf = c.createBiquadFilter(); hf.type = "highpass"; hf.frequency.value = 1800;
-            var hg = c.createGain(); hg.gain.setValueAtTime(0.35, t + 0.04);
-            hg.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
-            hs.connect(hf); hf.connect(hg); hg.connect(c.destination); hs.start(t + 0.04); hs.stop(t + 0.08);
-            // Ratchet clicks
-            for (var r = 0; r < 4; r++) { (function(r) {
-                var rt = t + 0.11 + r * 0.022;
-                var rs = c.createBufferSource(); rs.buffer = mkNoise(0.005, 0.18);
-                var rg = c.createGain(); rg.gain.setValueAtTime(0.16, rt);
-                rg.gain.exponentialRampToValueAtTime(0.001, rt + 0.008);
-                rs.connect(rg); rg.connect(c.destination); rs.start(rt); rs.stop(rt + 0.01);
+            // Paper ratchet roll
+            for (var r = 0; r < 3; r++) { (function(r) {
+                var rt = t + r * 0.035;
+                var rs = c.createBufferSource(); rs.buffer = mkNoise(0.006, 0.2);
+                var rg = c.createGain(); rg.gain.setValueAtTime(0.15, rt);
+                rg.gain.exponentialRampToValueAtTime(0.001, rt + 0.01);
+                rs.connect(rg); rg.connect(c.destination); rs.start(rt); rs.stop(rt + 0.012);
             })(r); }
         }
 
         /** Bell ding — on total. */
         function sndBell() {
             var c = getAC(), t = c.currentTime;
-            var o1 = c.createOscillator(); o1.type = "sine"; o1.frequency.value = 2400;
-            var g1 = c.createGain(); g1.gain.setValueAtTime(0.2, t);
-            g1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-            o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 0.6);
-            var o2 = c.createOscillator(); o2.type = "sine"; o2.frequency.value = 3500;
-            var g2 = c.createGain(); g2.gain.setValueAtTime(0.07, t);
-            g2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-            o2.connect(g2); g2.connect(c.destination); o2.start(t); o2.stop(t + 0.4);
+            var o1 = c.createOscillator(); o1.type = "sine"; o1.frequency.value = 2800;
+            var g1 = c.createGain(); g1.gain.setValueAtTime(0.19, t);
+            g1.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+            o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 0.55);
+            var o2 = c.createOscillator(); o2.type = "sine"; o2.frequency.value = 4100;
+            var g2 = c.createGain(); g2.gain.setValueAtTime(0.065, t);
+            g2.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+            o2.connect(g2); g2.connect(c.destination); o2.start(t); o2.stop(t + 0.38);
         }
 
         /** Carriage return — slide + thud. Used on clear. */
         function sndCarriage() {
             var c = getAC(), t = c.currentTime;
             var o = c.createOscillator(); o.type = "sawtooth";
-            o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(35, t + 0.25);
-            var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 400;
-            var g = c.createGain(); g.gain.setValueAtTime(0.09, t);
-            g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-            o.connect(f); f.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.26);
-            var es = c.createBufferSource(); es.buffer = mkNoise(0.012, 0.35);
-            var eg = c.createGain(); eg.gain.setValueAtTime(0.22, t + 0.22);
-            eg.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
-            es.connect(eg); eg.connect(c.destination); es.start(t + 0.22); es.stop(t + 0.27);
+            o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(22, t + 0.45);
+            var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 280;
+            var g = c.createGain(); g.gain.setValueAtTime(0.1, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+            o.connect(f); f.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.47);
+            var es = c.createBufferSource(); es.buffer = mkNoise(0.015, 0.35);
+            var eg = c.createGain(); eg.gain.setValueAtTime(0.2, t + 0.4);
+            eg.gain.exponentialRampToValueAtTime(0.001, t + 0.46);
+            es.connect(eg); eg.connect(c.destination); es.start(t + 0.4); es.stop(t + 0.47);
         }
 
         /* ══════════════════════════════════════════════════════════
@@ -590,13 +601,13 @@
                 spans.push(ch);
             }
             scrollToBottom(false);
+            sndStrike();
             var i = spans.length - 1;
             function typeNext() {
                 if (i >= 0) {
                     spans[i].style.visibility = "visible";
-                    sndClick();
                     i--;
-                    setTimeout(typeNext, 30);
+                    setTimeout(typeNext, 50);
                 } else {
                     if (cb) cb();
                 }
@@ -608,6 +619,7 @@
         function finalizeLine(symbol, isTotal) {
             if (!activeLine) return;
             if (symbol) activeLine.querySelector(".r-op").textContent = symbol;
+            sndAdvance();
             resetDigitMarker();
             if (isTotal) activeLine.classList.add("r-total");
             // Create the next blank line now, so the roll includes it
@@ -722,7 +734,7 @@
         }
 
         function pressOp(op, e) {
-            sndPrint();
+            sndClick();
             if (e) flashBtn(e.target || e);
             var v = parseFloat(currentInput);
             if (pendingOp !== null && !freshInput) {
@@ -743,7 +755,7 @@
         }
 
         function pressEquals(e) {
-            sndPrint();
+            sndClick();
             if (e) flashBtn(e.target || e);
             if (!pendingOp) return;
             var v = parseFloat(currentInput);
@@ -761,7 +773,7 @@
         }
 
         function pressSubtotal(e) {
-            sndPrint();
+            sndClick();
             if (e) flashBtn(e.target || e);
             if (!pendingOp) return;
             var v = parseFloat(currentInput);
@@ -779,7 +791,7 @@
         }
 
         function pressTotal(e) {
-            sndPrint();
+            sndClick();
             if (e) flashBtn(e.target || e);
             if (pendingOp !== null && !freshInput) {
                 var v = parseFloat(currentInput);
