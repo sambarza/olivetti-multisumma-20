@@ -65,13 +65,21 @@
         }
 
 
+        @font-face {
+            font-family: 'ImpactPrint';
+            src: local('Courier New');
+        }
+
         .receipt {
             background: transparent;
             padding: 0 12px;
             font-family: "Courier New", monospace;
             font-size: 0.48em;
-            color: #222;
+            color: #3a3a3a;
             pointer-events: auto;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: unset;
+            font-smooth: never;
         }
 
         /* Receipt line — impact printing look */
@@ -82,32 +90,43 @@
             white-space: nowrap;
             height: 1.1em;
             line-height: 1.1em;
-            /* Slight ink bleed like impact print */
-            text-shadow: 0.3px 0 0 rgba(0,0,0,0.12);
+            /* Impact print: ink bleed + slight blur + uneven density */
+            text-shadow:
+                0.4px 0 0 rgba(0,0,0,0.15),
+                -0.2px 0 0 rgba(0,0,0,0.08),
+                0 0.3px 0 rgba(0,0,0,0.1),
+                0 0 0.8px rgba(0,0,0,0.12);
+            letter-spacing: 0.5px;
+            filter: blur(0.15px) contrast(0.85);
         }
 
         .r-line .r-val {
             text-align: right;
             flex: 1;
-            color: #1a1a1a;
+            color: #3a3a3a;
         }
 
         .r-line .r-op {
             width: 22px;
             text-align: center;
             font-weight: 700;
-            color: #1a1a1a;
-            text-shadow: 0.3px 0 0 rgba(0,0,0,0.12);
+            color: #3a3a3a;
         }
 
         .r-line.r-total {
             font-weight: 700;
             color: #742121;
+            filter: blur(0.2px) contrast(0.8);
         }
 
         .r-line.r-total .r-val,
         .r-line.r-total .r-op {
             color: #742121;
+            text-shadow:
+                0.4px 0 0 rgba(116,33,33,0.2),
+                -0.2px 0 0 rgba(116,33,33,0.1),
+                0 0.3px 0 rgba(116,33,33,0.12),
+                0 0 0.8px rgba(116,33,33,0.15);
         }
 
 
