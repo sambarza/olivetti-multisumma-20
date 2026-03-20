@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olivetti Multisumma 20</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        /* ══════════════════════════════════════════════════════════
+           PAGE
+           ══════════════════════════════════════════════════════════ */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #b0a898;
+            font-family: sans-serif;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           MACHINE CONTAINER
+           The real photo is the background. Everything is overlaid.
+           All children use absolute positioning with % values
+           mapped to the actual key locations in the photo.
+           ══════════════════════════════════════════════════════════ */
+        .machine-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        /* The photo — sets the aspect ratio of the container */
+        .machine-photo {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+            /* Slight enhancement for crispness */
+            image-rendering: auto;
+            filter: contrast(1.03) brightness(1.02);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           PAPER RECEIPT — Curls forward out of the printer
+           Like the real machine: paper exits the top slot,
+           curls over the roller, and hangs down over the front.
+           ══════════════════════════════════════════════════════════ */
+        .receipt-container {
+            position: absolute;
+            /* Centered on the printer roller slot */
+            top: 16%;
+            left: 28%;
+            width: 30%;
+            z-index: 10;
+            pointer-events: none;
+            /* Fixed visible window — paper scrolls behind this */
+            overflow: hidden;
+            /* Height of the visible paper area in the photo */
+            height: 12%;
+        }
+
+        .receipt {
+            background: transparent;
+            padding: 0 12px;
+            font-family: "Courier New", monospace;
+            font-size: 0.68em;
+            color: #222;
+            pointer-events: auto;
+        }
+
+        /* Receipt line — impact printing look */
+        .r-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+            white-space: nowrap;
+            height: 1.6em;
+            line-height: 1.6em;
+            /* Slight ink bleed like impact print */
+            text-shadow: 0.3px 0 0 rgba(0,0,0,0.12);
+        }
+
+        .r-line .r-val {
+            text-align: right;
+            flex: 1;
+            color: #1a1a1a;
+        }
+
+        .r-line .r-op {
+            width: 22px;
+            text-align: center;
+            font-weight: 700;
+            /* Red ink — dual-color ribbon */
+            color: #c41a1a;
+            text-shadow: 0.3px 0 0 rgba(196,26,26,0.2);
+        }
+
+        .r-line.r-total {
+            border-top: 1px solid #444;
+            font-weight: 700;
+            margin-top: 2px;
+            padding-top: 2px;
+        }
+
+        .r-line.r-total .r-val {
+            text-decoration: underline;
+            text-decoration-style: double;
+            text-underline-offset: 3px;
+        }
+
+
+        /* ══════════════════════════════════════════════════════════
+           REGISTER DISPLAY OVERLAY
+           Sits on top of the real display window in the photo.
+           Semi-transparent to blend with the actual display.
+           ══════════════════════════════════════════════════════════ */
+        .display-overlay {
+            position: absolute;
+            /* Mapped to the display window position in the photo */
+            left: 15%;
+            top: 53.5%;
+            width: 24%;
+            height: 2.8%;
+            /* Blend with the real display */
+            background: rgba(160, 160, 140, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 4px;
+            font-family: "Courier New", monospace;
+            font-size: clamp(0.6em, 2.5vw, 1em);
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: 2px;
+            z-index: 5;
+            border-radius: 1px;
+            text-shadow: 0 0 1px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .display-overlay.err { color: #a01010; }
+
+        /* ══════════════════════════════════════════════════════════
+           INVISIBLE BUTTON OVERLAYS
+           Transparent buttons positioned exactly over each key
+           in the photo. On press, a visual feedback overlay shows.
+           ══════════════════════════════════════════════════════════ */
+        .btn {
+            position: absolute;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            z-index: 6;
+            border-radius: 3px;
+            /* No visible appearance — the photo key is visible beneath */
+            outline: none;
+            transition: box-shadow 0.05s, background 0.05s;
+        }
+
+        /* Hover — subtle highlight to show interactivity */
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+        }
+
+        /* Active / pressed — darkening + inset shadow simulating key depression */
+        .btn:active {
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow:
+                inset 0 2px 4px rgba(0, 0, 0, 0.4),
+                inset 0 0 2px rgba(0, 0, 0, 0.2);
+            /* Slight downward shift to simulate physical press */
+            transform: translateY(1px);
+        }
+
+        /* Specific press effect for red keys */
+        .btn-red:active {
+            background: rgba(80, 0, 0, 0.25);
+        }
+
+        /* Specific press effect for white keys */
+        .btn-white:active {
+            background: rgba(0, 0, 0, 0.15);
+            box-shadow:
+                inset 0 2px 3px rgba(0, 0, 0, 0.3),
+                inset 0 0 1px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Visual "flash" feedback on key press */
+        .btn.pressed {
+            background: rgba(255, 255, 255, 0.25);
+            transition: none;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           LOGIN OVERLAY — Centered on the machine
+           ══════════════════════════════════════════════════════════ */
+        #login-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            border-radius: 4px;
+        }
+
+        #login-overlay p {
+            color: #eee;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .g_id_signin { display: inline-block; }
+
+        /* User info — small bar at top of machine */
+        #user-bar {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.55);
+            color: #eee;
+            font-size: 0.6em;
+            text-align: center;
+            padding: 3px 8px;
+            z-index: 15;
+            border-radius: 4px 4px 0 0;
+        }
+
+        /* Hide calculator elements until login */
+        .calc-hidden { display: none; }
+        /* Buttons are invisible overlays but must remain in layout */
+        .btn-hidden { visibility: hidden; }
+
+        /* ══════════════════════════════════════════════════════════
+           RESPONSIVE
+           ══════════════════════════════════════════════════════════ */
+        @media (max-width: 500px) {
+            body { padding: 10px; }
+            .receipt { font-size: 0.6em; max-height: 160px; }
+            .receipt-container { top: 12%; }
+            .display-overlay { font-size: 0.6em; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="machine-wrapper">
+
+        <!-- The real photograph — the only visual base -->
+        <img src="olivetti-front.jpg" alt="Olivetti Multisumma 20" class="machine-photo">
+
+        <!-- ════ LOGIN OVERLAY ════ -->
+        <div id="login-overlay">
+            <p>Sign in with Google<br>to use the calculator</p>
+            <div id="g_id_onload"
+                 data-client_id="408727797747-ujv91ko0jcj91v6n6rb9qkm2t33im60n.apps.googleusercontent.com"
+                 data-callback="onSignIn"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="large"></div>
+        </div>
+
+        <!-- ════ USER BAR ════ -->
+        <div id="user-bar"></div>
+
+        <!-- ════ PAPER RECEIPT — comes out of the printer ════ -->
+        <div class="receipt-container calc-hidden">
+            <div class="receipt" id="receipt"></div>
+        </div>
+
+        <!-- ════ REGISTER DISPLAY OVERLAY ════ -->
+        <div class="display-overlay calc-hidden" id="display">0</div>
+
+        <!-- ════════════════════════════════════════════════════════
+             BUTTON OVERLAYS
+             Each button is positioned over the corresponding key
+             in the photograph using percentage-based coordinates.
+
+             Positions were mapped from olivetti-front.jpg:
+             - Image shows the machine from a slightly elevated angle
+             - The keypad panel occupies the lower ~45% of the image
+             - Keys are mapped relative to total image dimensions
+             ════════════════════════════════════════════════════════ -->
+
+        <!-- ── Number keys (white) ── -->
+        <!-- Row: 7 8 9 -->
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('7')"
+            style="left:38%; top:57%; width:6.5%; height:4%;" title="7"></button>
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('8')"
+            style="left:45%; top:57%; width:6.5%; height:4%;" title="8"></button>
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('9')"
+            style="left:52%; top:57%; width:6.5%; height:4%;" title="9"></button>
+
+        <!-- Row: 4 5 6 -->
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('4')"
+            style="left:38%; top:62.5%; width:6.5%; height:4%;" title="4"></button>
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('5')"
+            style="left:45%; top:62.5%; width:6.5%; height:4%;" title="5"></button>
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('6')"
+            style="left:52%; top:62.5%; width:6.5%; height:4%;" title="6"></button>
+
+        <!-- Row: 1 2 3 -->
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('1')"
+            style="left:38%; top:68%; width:6.5%; height:4%;" title="1"></button>
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('2')"
+            style="left:45%; top:68%; width:6.5%; height:4%;" title="2"></button>
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('3')"
+            style="left:52%; top:68%; width:6.5%; height:4%;" title="3"></button>
+
+        <!-- Row: 0, 00, 000 -->
+        <button class="btn btn-white btn-hidden" onclick="pressDigit('0')"
+            style="left:38%; top:73%; width:6.5%; height:4%;" title="0"></button>
+        <button class="btn btn-hidden" onclick="pressDigit('00')"
+            style="left:45%; top:73%; width:6.5%; height:4%;" title="00"></button>
+        <button class="btn btn-hidden" onclick="pressDigit('000')"
+            style="left:52%; top:73%; width:6.5%; height:4%;" title="000"></button>
+
+        <!-- ── Right side: − (red, tall) ── -->
+        <button class="btn btn-red btn-hidden" onclick="pressOp('subtract')"
+            style="left:63%; top:56.5%; width:10%; height:10%;" title="subtract"></button>
+
+        <!-- ── Right side: + (black, tall) ── -->
+        <button class="btn btn-hidden" onclick="pressOp('add')"
+            style="left:63%; top:67.5%; width:10%; height:10%;" title="add"></button>
+
+        <!-- ── Far right: ◇ (subtotal) ── -->
+        <button class="btn btn-hidden" onclick="pressSubtotal()"
+            style="left:74%; top:62%; width:6.5%; height:4.5%;" title="subtotal"></button>
+
+        <!-- ── Far right: * (total) ── -->
+        <button class="btn btn-hidden" onclick="pressTotal()"
+            style="left:74%; top:73%; width:6.5%; height:4.5%;" title="total"></button>
+
+        <!-- ── Left side: = (red pill button) ── -->
+        <button class="btn btn-red btn-hidden" onclick="pressEquals()"
+            style="left:12%; top:66%; width:10%; height:5.5%; border-radius:50%;" title="equals"></button>
+
+        <!-- ── Left side: × (multiply) ── -->
+        <button class="btn btn-hidden" onclick="pressOp('multiply')"
+            style="left:10%; top:72%; width:8%; height:4.5%;" title="multiply"></button>
+
+        <!-- ── Left side: C (clear) ── -->
+        <button class="btn btn-hidden" onclick="pressClear()"
+            style="left:19%; top:72%; width:8%; height:4.5%;" title="clear"></button>
+
+        <!-- ── Left side: ÷ (divide) — mapped to toggle area ── -->
+        <button class="btn btn-hidden" onclick="pressOp('divide')"
+            style="left:16%; top:59.5%; width:7%; height:5%;" title="divide"></button>
+
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════════════════════
+           SOUND ENGINE — Web Audio API
+           Mechanical sounds of the Olivetti Multisumma 20
+           ══════════════════════════════════════════════════════════ */
+        var ac = null;
+
+        function getAC() {
+            if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+            return ac;
+        }
+
+        /** Generate a noise buffer. */
+        function mkNoise(dur, amp) {
+            var c = getAC(), n = c.sampleRate * dur;
+            var b = c.createBuffer(1, n, c.sampleRate);
+            var d = b.getChannelData(0);
+            for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * amp;
+            return b;
+        }
+
+        /** Mechanical key click — sharp snap + body thud. */
+        function sndClick() {
+            var c = getAC(), t = c.currentTime;
+            // Snap
+            var s = c.createBufferSource(); s.buffer = mkNoise(0.03, 0.4);
+            var f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2800; f.Q.value = 2;
+            var g = c.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+            s.connect(f); f.connect(g); g.connect(c.destination); s.start(t); s.stop(t + 0.035);
+            // Thud
+            var o = c.createOscillator(); o.type = "sine"; o.frequency.value = 140;
+            var g2 = c.createGain(); g2.gain.setValueAtTime(0.07, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            o.connect(g2); g2.connect(c.destination); o.start(t); o.stop(t + 0.06);
+        }
+
+        /** Print sound — motor whir + hammer strike + paper ratchet. */
+        function sndPrint() {
+            var c = getAC(), t = c.currentTime;
+            // Motor
+            var mo = c.createOscillator(); mo.type = "sawtooth";
+            mo.frequency.setValueAtTime(70, t); mo.frequency.linearRampToValueAtTime(120, t + 0.06);
+            mo.frequency.linearRampToValueAtTime(45, t + 0.22);
+            var mf = c.createBiquadFilter(); mf.type = "lowpass"; mf.frequency.value = 350;
+            var mg = c.createGain(); mg.gain.setValueAtTime(0.06, t);
+            mg.gain.linearRampToValueAtTime(0.11, t + 0.04);
+            mg.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+            mo.connect(mf); mf.connect(mg); mg.connect(c.destination); mo.start(t); mo.stop(t + 0.25);
+            // Hammer
+            var hs = c.createBufferSource(); hs.buffer = mkNoise(0.018, 0.5);
+            var hf = c.createBiquadFilter(); hf.type = "highpass"; hf.frequency.value = 1800;
+            var hg = c.createGain(); hg.gain.setValueAtTime(0.35, t + 0.04);
+            hg.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
+            hs.connect(hf); hf.connect(hg); hg.connect(c.destination); hs.start(t + 0.04); hs.stop(t + 0.08);
+            // Ratchet clicks
+            for (var r = 0; r < 4; r++) { (function(r) {
+                var rt = t + 0.11 + r * 0.022;
+                var rs = c.createBufferSource(); rs.buffer = mkNoise(0.005, 0.18);
+                var rg = c.createGain(); rg.gain.setValueAtTime(0.16, rt);
+                rg.gain.exponentialRampToValueAtTime(0.001, rt + 0.008);
+                rs.connect(rg); rg.connect(c.destination); rs.start(rt); rs.stop(rt + 0.01);
+            })(r); }
+        }
+
+        /** Bell ding — on total. */
+        function sndBell() {
+            var c = getAC(), t = c.currentTime;
+            var o1 = c.createOscillator(); o1.type = "sine"; o1.frequency.value = 2400;
+            var g1 = c.createGain(); g1.gain.setValueAtTime(0.2, t);
+            g1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+            o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 0.6);
+            var o2 = c.createOscillator(); o2.type = "sine"; o2.frequency.value = 3500;
+            var g2 = c.createGain(); g2.gain.setValueAtTime(0.07, t);
+            g2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+            o2.connect(g2); g2.connect(c.destination); o2.start(t); o2.stop(t + 0.4);
+        }
+
+        /** Carriage return — slide + thud. Used on clear. */
+        function sndCarriage() {
+            var c = getAC(), t = c.currentTime;
+            var o = c.createOscillator(); o.type = "sawtooth";
+            o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(35, t + 0.25);
+            var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 400;
+            var g = c.createGain(); g.gain.setValueAtTime(0.09, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+            o.connect(f); f.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.26);
+            var es = c.createBufferSource(); es.buffer = mkNoise(0.012, 0.35);
+            var eg = c.createGain(); eg.gain.setValueAtTime(0.22, t + 0.22);
+            eg.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+            es.connect(eg); eg.connect(c.destination); es.start(t + 0.22); es.stop(t + 0.27);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           VISUAL KEY PRESS FEEDBACK
+           Brief flash effect on the button overlay
+           ══════════════════════════════════════════════════════════ */
+        function flashBtn(btn) {
+            if (!btn || !btn.classList) return;
+            btn.classList.add("pressed");
+            setTimeout(function() { btn.classList.remove("pressed"); }, 80);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           STATE
+           ══════════════════════════════════════════════════════════ */
+        var API_URL = window.location.origin;
+        var idToken = null;
+        var currentInput = "0";
+        var pendingOp = null;
+        var pendingValue = null;
+        var freshInput = true;
+
+        /* ══════════════════════════════════════════════════════════
+           GOOGLE SIGN-IN
+           ══════════════════════════════════════════════════════════ */
+        function onSignIn(response) {
+            idToken = response.credential;
+            var payload = JSON.parse(atob(idToken.split(".")[1]));
+
+            // Hide login, show calculator UI
+            document.getElementById("login-overlay").style.display = "none";
+            var bar = document.getElementById("user-bar");
+            bar.style.display = "block";
+            bar.textContent = payload.email;
+
+            // Show all calculator elements
+            document.querySelectorAll(".calc-hidden").forEach(function(el) {
+                el.classList.remove("calc-hidden");
+            });
+            document.querySelectorAll(".btn-hidden").forEach(function(el) {
+                el.classList.remove("btn-hidden");
+            });
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           DISPLAY
+           ══════════════════════════════════════════════════════════ */
+        function updateDisplay(v) {
+            var el = document.getElementById("display");
+            el.textContent = v;
+            el.classList.remove("err");
+        }
+
+        function showError(msg) {
+            var el = document.getElementById("display");
+            el.textContent = msg;
+            el.classList.add("err");
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           PAPER RECEIPT
+           Simulates the real Olivetti printing behavior:
+           - Digits print immediately as typed
+           - Operation key finalizes the line with the symbol + rolls
+           - Equals prints result + rolls
+           ══════════════════════════════════════════════════════════ */
+        var sym = { add: "+", subtract: "\u2212", multiply: "\u00d7", divide: "\u00f7" };
+        var activeLine = null; // the line currently being typed on
+
+        /** Ensure there is an active line to type digits onto. */
+        function ensureLine() {
+            if (activeLine) return;
+            ensureReceiptSpacer();
+            var receipt = document.getElementById("receipt");
+            activeLine = document.createElement("div");
+            activeLine.className = "r-line";
+            activeLine.innerHTML = '<span class="r-val"></span><span class="r-op"></span>';
+            receipt.appendChild(activeLine);
+        }
+
+        /** Update the digits shown on the active line. */
+        function printDigits(text) {
+            ensureLine();
+            activeLine.querySelector(".r-val").textContent = text;
+        }
+
+        /** Finalize the active line with an operation symbol and roll the paper. */
+        function finalizeLine(symbol, isTotal) {
+            if (!activeLine) return;
+            if (symbol) activeLine.querySelector(".r-op").textContent = symbol;
+            if (isTotal) activeLine.classList.add("r-total");
+            // Create the next blank line now, so the roll includes it
+            activeLine = null;
+            ensureLine();
+            rollPaper();
+            if (isTotal) setTimeout(sndBell, 120);
+        }
+
+        /** Print a complete new line (for results). */
+        function printResultLine(value, symbol, isTotal) {
+            sndPrint();
+            var receipt = document.getElementById("receipt");
+            var line = document.createElement("div");
+            line.className = "r-line" + (isTotal ? " r-total" : "");
+            line.innerHTML =
+                '<span class="r-val">' + value + '</span>' +
+                '<span class="r-op">' + (symbol || "") + '</span>';
+            receipt.appendChild(line);
+            activeLine = null;
+            rollPaper();
+            if (isTotal) setTimeout(sndBell, 120);
+        }
+
+        /** Add a spacer to push first line to bottom of visible area. */
+        var spacerAdded = false;
+        function ensureReceiptSpacer() {
+            if (spacerAdded) return;
+            var container = document.querySelector(".receipt-container");
+            var receipt = document.getElementById("receipt");
+            if (container.clientHeight > 0) {
+                var spacer = document.createElement("div");
+                spacer.style.height = container.clientHeight + "px";
+                receipt.insertBefore(spacer, receipt.firstChild);
+                spacerAdded = true;
+            }
+        }
+
+        /** Scroll the receipt container to show the bottom content. */
+        function scrollToBottom(animate) {
+            var container = document.querySelector(".receipt-container");
+            var target = container.scrollHeight - container.clientHeight;
+            if (target < 0) target = 0;
+            if (!animate) {
+                container.scrollTop = target;
+                return;
+            }
+            var start = container.scrollTop;
+            var diff = target - start;
+            if (diff <= 0) return;
+            var startTime = null;
+            function frame(time) {
+                if (!startTime) startTime = time;
+                var progress = Math.min((time - startTime) / 300, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                container.scrollTop = start + diff * eased;
+                if (progress < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+
+        /** Animate the paper rolling upward by one line. */
+        function rollPaper() {
+            scrollToBottom(true);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           KEY HANDLERS
+           ══════════════════════════════════════════════════════════ */
+        function pressDigit(d, e) {
+            sndClick();
+            if (e) flashBtn(e.target || e);
+            if (freshInput) {
+                currentInput = (d === ".") ? "0." : d;
+                freshInput = false;
+            } else {
+                if (d === "." && currentInput.indexOf(".") !== -1) return;
+                if (currentInput === "0" && d !== ".") currentInput = d;
+                else currentInput += d;
+            }
+            updateDisplay(currentInput);
+            printDigits(currentInput);
+        }
+
+        function pressOp(op, e) {
+            sndClick(); sndPrint();
+            if (e) flashBtn(e.target || e);
+            var v = parseFloat(currentInput);
+            if (pendingOp !== null && !freshInput) {
+                finalizeLine(sym[pendingOp], false);
+                callAPI(pendingOp, pendingValue, v, function(r) {
+                    pendingValue = r; pendingOp = op;
+                    currentInput = String(r); freshInput = true;
+                    updateDisplay(fmt(r));
+                });
+            } else {
+                finalizeLine(sym[op], false);
+                pendingValue = v; pendingOp = op; freshInput = true;
+            }
+        }
+
+        function pressEquals(e) {
+            sndClick(); sndPrint();
+            if (e) flashBtn(e.target || e);
+            if (!pendingOp) return;
+            var v = parseFloat(currentInput);
+            finalizeLine(sym[pendingOp], false);
+            callAPI(pendingOp, pendingValue, v, function(r) {
+                printResultLine(fmt(r), "=", true);
+                pendingValue = null; pendingOp = null;
+                currentInput = String(r); freshInput = true;
+                updateDisplay(fmt(r));
+            });
+        }
+
+        function pressSubtotal(e) {
+            sndClick(); sndPrint();
+            if (e) flashBtn(e.target || e);
+            if (!pendingOp) return;
+            var v = parseFloat(currentInput);
+            finalizeLine(sym[pendingOp], false);
+            callAPI(pendingOp, pendingValue, v, function(r) {
+                printResultLine(fmt(r), "\u25c7", true);
+                pendingValue = r; pendingOp = null;
+                currentInput = String(r); freshInput = true;
+                updateDisplay(fmt(r));
+            });
+        }
+
+        function pressTotal(e) {
+            sndClick(); sndPrint();
+            if (e) flashBtn(e.target || e);
+            if (pendingOp !== null && !freshInput) {
+                var v = parseFloat(currentInput);
+                finalizeLine(sym[pendingOp], false);
+                callAPI(pendingOp, pendingValue, v, function(r) {
+                    printResultLine(fmt(r), "*", true);
+                    pendingValue = null; pendingOp = null;
+                    currentInput = String(r); freshInput = true;
+                    updateDisplay(fmt(r));
+                });
+            } else {
+                finalizeLine("*", true);
+                freshInput = true;
+            }
+        }
+
+        function pressClear(e) {
+            sndClick(); sndCarriage();
+            if (e) flashBtn(e.target || e);
+            currentInput = "0"; freshInput = true;
+            pendingOp = null; pendingValue = null;
+            activeLine = null;
+            updateDisplay("0");
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           API
+           ══════════════════════════════════════════════════════════ */
+        function callAPI(op, a, b, cb) {
+            fetch(API_URL + "/" + op + "/" + a + "/" + b, {
+                headers: { "Authorization": "Bearer " + idToken }
+            })
+            .then(function(r) {
+                return r.json().then(function(d) {
+                    if (!r.ok) { showError(d.detail || "Err"); printReceipt("ERR", "!", false); return; }
+                    cb(d.result);
+                });
+            })
+            .catch(function() {
+                showError("Err"); printReceipt("ERR", "!", false);
+            });
+        }
+
+        function fmt(n) {
+            if (Number.isInteger(n)) return String(n);
+            return parseFloat(n.toFixed(8)).toString();
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           KEYBOARD SUPPORT
+           ══════════════════════════════════════════════════════════ */
+        document.addEventListener("keydown", function(e) {
+            if (!idToken) return;
+            if (e.key >= "0" && e.key <= "9") { pressDigit(e.key); return; }
+            if (e.key === "." || e.key === ",") { pressDigit("."); return; }
+            if (e.key === "+") { pressOp("add"); return; }
+            if (e.key === "-") { pressOp("subtract"); return; }
+            if (e.key === "*") { pressOp("multiply"); return; }
+            if (e.key === "/") { e.preventDefault(); pressOp("divide"); return; }
+            if (e.key === "Enter") { pressEquals(); return; }
+            if (e.key === "Escape") { pressClear(); return; }
+        });
+
+        /* ══════════════════════════════════════════════════════════
+           WIRE UP onclick TO PASS EVENT FOR FLASH EFFECT
+           ══════════════════════════════════════════════════════════ */
+        document.querySelectorAll(".btn").forEach(function(btn) {
+            var origClick = btn.getAttribute("onclick");
+            btn.removeAttribute("onclick");
+            btn.addEventListener("click", function(e) {
+                /* Re-invoke the original handler, passing the event */
+                var fn = origClick.replace(")", ",event)").replace("(,", "(");
+                try { eval(fn); } catch(ex) { /* fallback */ }
+            });
+        });
+
+        /* ══════════════════════════════════════════════════════════
+           LOAD SAVED BUTTON LAYOUT FROM SERVER
+           Reads positions saved via /api/layout
+           ══════════════════════════════════════════════════════════ */
+        (function() {
+            fetch("/api/layout")
+                .then(function(r) { return r.json(); })
+                .then(function(saved) {
+                    if (!saved || !saved.length) return;
+                    var btns = document.querySelectorAll(".btn");
+                    var byId = {};
+                    btns.forEach(function(b) { byId[b.title.toLowerCase()] = b; });
+                    saved.forEach(function(pos) {
+                        var b = byId[pos.id.toLowerCase()];
+                        if (!b) return;
+                        b.style.left   = pos.left + "%";
+                        b.style.top    = pos.top + "%";
+                        b.style.width  = pos.width + "%";
+                        b.style.height = pos.height + "%";
+                    });
+                })
+                .catch(function() {});
+        })();
+    </script>
+</body>
+</html>

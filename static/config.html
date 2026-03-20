@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Layout Config</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #2a2a2a;
+            font-family: sans-serif;
+            color: #eee;
+            padding: 10px;
+        }
+
+        h1 { font-size: 1em; margin: 6px 0; }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .toolbar button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .toolbar .save-btn { background: #2ea043; color: #fff; }
+        .toolbar .save-btn:hover { background: #3bb554; }
+        .toolbar .reset-btn { background: #555; color: #fff; }
+        .toolbar .reset-btn:hover { background: #777; }
+
+        .toolbar .status {
+            font-size: 0.8em;
+            color: #8f8;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toolbar .status.show { opacity: 1; }
+
+        .info {
+            font-size: 0.75em;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        /* Selected button info */
+        .selected-info {
+            font-size: 0.75em;
+            color: #ccc;
+            background: #333;
+            padding: 4px 10px;
+            border-radius: 3px;
+            min-height: 1.6em;
+        }
+
+        .machine-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .machine-photo {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+            filter: contrast(1.03) brightness(1.02);
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Config buttons — visible with labels */
+        .cfg-btn {
+            position: absolute;
+            border: 2px solid lime;
+            background: rgba(0, 255, 0, 0.12);
+            cursor: move;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: lime;
+            text-shadow: 0 0 3px #000, 0 0 6px #000;
+            user-select: none;
+        }
+
+        .cfg-btn:hover { background: rgba(0, 255, 0, 0.25); }
+        .cfg-btn.selected {
+            border-color: #ff0;
+            background: rgba(255, 255, 0, 0.2);
+            color: #ff0;
+            z-index: 7;
+        }
+
+        /* Resize handle */
+        .cfg-btn .resize-handle {
+            position: absolute;
+            right: -3px;
+            bottom: -3px;
+            width: 10px;
+            height: 10px;
+            background: lime;
+            cursor: nwse-resize;
+            border-radius: 1px;
+        }
+
+        .cfg-btn.selected .resize-handle { background: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>Button Layout Configuration</h1>
+    <div class="info">Drag buttons to move. Drag bottom-right corner to resize. Arrow keys for fine-tuning (hold Shift for size).</div>
+    <div class="toolbar">
+        <button class="save-btn" onclick="savePositions()">Save</button>
+        <button class="reset-btn" onclick="resetPositions()">Reset to defaults</button>
+        <span class="status" id="status">Saved!</span>
+        <div class="selected-info" id="selected-info">Click a button to select it</div>
+    </div>
+
+    <div class="machine-wrapper" id="wrapper">
+        <img src="olivetti-front.jpg" alt="Olivetti Multisumma 20" class="machine-photo"
+             draggable="false" ondragstart="return false;">
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════════════════════
+           DEFAULT BUTTON DEFINITIONS
+           ══════════════════════════════════════════════════════════ */
+        var DEFAULTS = [
+            { id: "7",        label: "7",    left: 38,   top: 57,   width: 6.5, height: 4 },
+            { id: "8",        label: "8",    left: 45,   top: 57,   width: 6.5, height: 4 },
+            { id: "9",        label: "9",    left: 52,   top: 57,   width: 6.5, height: 4 },
+            { id: "4",        label: "4",    left: 38,   top: 62.5, width: 6.5, height: 4 },
+            { id: "5",        label: "5",    left: 45,   top: 62.5, width: 6.5, height: 4 },
+            { id: "6",        label: "6",    left: 52,   top: 62.5, width: 6.5, height: 4 },
+            { id: "1",        label: "1",    left: 38,   top: 68,   width: 6.5, height: 4 },
+            { id: "2",        label: "2",    left: 45,   top: 68,   width: 6.5, height: 4 },
+            { id: "3",        label: "3",    left: 52,   top: 68,   width: 6.5, height: 4 },
+            { id: "0",        label: "0",    left: 38,   top: 73,   width: 6.5, height: 4 },
+            { id: "00",       label: "00",   left: 45,   top: 73,   width: 6.5, height: 4 },
+            { id: "000",      label: "000",  left: 52,   top: 73,   width: 6.5, height: 4 },
+            { id: "subtract", label: "\u2212",left: 63,  top: 56.5, width: 10,  height: 10 },
+            { id: "add",      label: "+",    left: 63,   top: 67.5, width: 10,  height: 10 },
+            { id: "subtotal", label: "\u25c7",left: 74,  top: 62,   width: 6.5, height: 4.5 },
+            { id: "total",    label: "*",    left: 74,   top: 73,   width: 6.5, height: 4.5 },
+            { id: "equals",   label: "=",    left: 12,   top: 66,   width: 10,  height: 5.5 },
+            { id: "multiply", label: "\u00d7",left: 10,  top: 72,   width: 8,   height: 4.5 },
+            { id: "clear",    label: "C",    left: 19,   top: 72,   width: 8,   height: 4.5 },
+            { id: "divide",   label: "\u00f7",left: 16,  top: 59.5, width: 7,   height: 5 }
+        ];
+
+        var wrapper = document.getElementById("wrapper");
+        var selectedBtn = null;
+
+        /* ══════════════════════════════════════════════════════════
+           LOAD / SAVE — via server API
+           ══════════════════════════════════════════════════════════ */
+        function loadPositions(cb) {
+            fetch("/api/layout")
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    cb(data && data.length === DEFAULTS.length ? data
+                       : DEFAULTS.map(function(d) { return Object.assign({}, d); }));
+                })
+                .catch(function() {
+                    cb(DEFAULTS.map(function(d) { return Object.assign({}, d); }));
+                });
+        }
+
+        function savePositions() {
+            var data = Array.from(document.querySelectorAll(".cfg-btn")).map(function(el) {
+                return {
+                    id:     el.dataset.id,
+                    label:  el.dataset.label,
+                    left:   parseFloat(el.style.left),
+                    top:    parseFloat(el.style.top),
+                    width:  parseFloat(el.style.width),
+                    height: parseFloat(el.style.height)
+                };
+            });
+            fetch("/api/layout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            }).then(function() {
+                var s = document.getElementById("status");
+                s.classList.add("show");
+                setTimeout(function() { s.classList.remove("show"); }, 1500);
+            });
+        }
+
+        function resetPositions() {
+            fetch("/api/layout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(DEFAULTS)
+            }).then(function() {
+                document.querySelectorAll(".cfg-btn").forEach(function(el) { el.remove(); });
+                buildButtons(DEFAULTS.map(function(d) { return Object.assign({}, d); }));
+            });
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           BUILD BUTTONS
+           ══════════════════════════════════════════════════════════ */
+        function buildButtons(positions) {
+            positions.forEach(function(pos) {
+                var el = document.createElement("div");
+                el.className = "cfg-btn";
+                el.dataset.id = pos.id;
+                el.dataset.label = pos.label;
+                el.style.left   = pos.left + "%";
+                el.style.top    = pos.top + "%";
+                el.style.width  = pos.width + "%";
+                el.style.height = pos.height + "%";
+                el.textContent  = pos.label;
+
+                var handle = document.createElement("div");
+                handle.className = "resize-handle";
+                el.appendChild(handle);
+
+                el.addEventListener("mousedown", function(e) {
+                    if (e.target === handle) return; // resize handled separately
+                    e.preventDefault();
+                    selectBtn(el);
+                    startDrag(el, e);
+                });
+
+                handle.addEventListener("mousedown", function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectBtn(el);
+                    startResize(el, e);
+                });
+
+                wrapper.appendChild(el);
+            });
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           SELECTION
+           ══════════════════════════════════════════════════════════ */
+        function selectBtn(el) {
+            if (selectedBtn) selectedBtn.classList.remove("selected");
+            selectedBtn = el;
+            el.classList.add("selected");
+            updateInfo();
+        }
+
+        function updateInfo() {
+            var info = document.getElementById("selected-info");
+            if (!selectedBtn) { info.textContent = "Click a button to select it"; return; }
+            var l = parseFloat(selectedBtn.style.left).toFixed(1);
+            var t = parseFloat(selectedBtn.style.top).toFixed(1);
+            var w = parseFloat(selectedBtn.style.width).toFixed(1);
+            var h = parseFloat(selectedBtn.style.height).toFixed(1);
+            info.textContent = selectedBtn.dataset.id +
+                " \u2014 left:" + l + "% top:" + t + "% w:" + w + "% h:" + h + "%";
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           DRAG (move)
+           ══════════════════════════════════════════════════════════ */
+        function startDrag(el, e) {
+            var rect = wrapper.getBoundingClientRect();
+            var startX = e.clientX, startY = e.clientY;
+            var origLeft = parseFloat(el.style.left);
+            var origTop  = parseFloat(el.style.top);
+
+            function onMove(e2) {
+                var dx = (e2.clientX - startX) / rect.width * 100;
+                var dy = (e2.clientY - startY) / rect.height * 100;
+                el.style.left = (origLeft + dx).toFixed(2) + "%";
+                el.style.top  = (origTop + dy).toFixed(2) + "%";
+                updateInfo();
+            }
+
+            function onUp() {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            }
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           RESIZE
+           ══════════════════════════════════════════════════════════ */
+        function startResize(el, e) {
+            var rect = wrapper.getBoundingClientRect();
+            var startX = e.clientX, startY = e.clientY;
+            var origW = parseFloat(el.style.width);
+            var origH = parseFloat(el.style.height);
+
+            function onMove(e2) {
+                var dw = (e2.clientX - startX) / rect.width * 100;
+                var dh = (e2.clientY - startY) / rect.height * 100;
+                el.style.width  = Math.max(2, origW + dw).toFixed(2) + "%";
+                el.style.height = Math.max(1, origH + dh).toFixed(2) + "%";
+                updateInfo();
+            }
+
+            function onUp() {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            }
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           KEYBOARD FINE-TUNING
+           Arrow keys move selected button (0.5% steps).
+           Hold Shift to resize instead.
+           ══════════════════════════════════════════════════════════ */
+        document.addEventListener("keydown", function(e) {
+            if (!selectedBtn) return;
+            var step = 0.5;
+            var arrow = { ArrowLeft: [-step, 0], ArrowRight: [step, 0],
+                          ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+            if (!arrow) return;
+            e.preventDefault();
+
+            if (e.shiftKey) {
+                // Resize
+                var w = parseFloat(selectedBtn.style.width) + arrow[0];
+                var h = parseFloat(selectedBtn.style.height) + arrow[1];
+                selectedBtn.style.width  = Math.max(2, w).toFixed(2) + "%";
+                selectedBtn.style.height = Math.max(1, h).toFixed(2) + "%";
+            } else {
+                // Move
+                var l = parseFloat(selectedBtn.style.left) + arrow[0];
+                var t = parseFloat(selectedBtn.style.top) + arrow[1];
+                selectedBtn.style.left = l.toFixed(2) + "%";
+                selectedBtn.style.top  = t.toFixed(2) + "%";
+            }
+            updateInfo();
+        });
+
+        /* ══════════════════════════════════════════════════════════
+           INIT
+           ══════════════════════════════════════════════════════════ */
+        loadPositions(buildButtons);
+    </script>
+</body>
+</html>

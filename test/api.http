@@ -1,26 +1,59 @@
-### Positive number
-GET http://127.0.0.1:8000/double/5
+### Replace with your actual Google OAuth2 ID token
+@token = YOUR_GOOGLE_ID_TOKEN_HERE
 
-### Negative number
-GET http://127.0.0.1:8000/double/-3
+### ── Add ──
 
-### Zero
-GET http://127.0.0.1:8000/double/0
+### Add two positive numbers
+GET http://127.0.0.1:8000/add/3/5
+Authorization: Bearer {{token}}
 
-### Large number
-GET http://127.0.0.1:8000/double/999999999
+### Add with negative number
+GET http://127.0.0.1:8000/add/-3/5
+Authorization: Bearer {{token}}
 
-### Very large number (near max int)
-GET http://127.0.0.1:8000/double/9999999999999999999
+### Add floats
+GET http://127.0.0.1:8000/add/1.5/2.3
+Authorization: Bearer {{token}}
 
-### Invalid input: string instead of number (expects 422)
-GET http://127.0.0.1:8000/double/abc
+### ── Subtract ──
 
-### Invalid input: float instead of integer (expects 422)
-GET http://127.0.0.1:8000/double/3.14
+### Subtract
+GET http://127.0.0.1:8000/subtract/10/4
+Authorization: Bearer {{token}}
 
-### Invalid input: empty parameter (expects 404)
-GET http://127.0.0.1:8000/double/
+### Subtract with negative result
+GET http://127.0.0.1:8000/subtract/3/10
+Authorization: Bearer {{token}}
 
-### Invalid input: special characters (expects 422)
-GET http://127.0.0.1:8000/double/@!#
+### ── Multiply ──
+
+### Multiply
+GET http://127.0.0.1:8000/multiply/3/7
+Authorization: Bearer {{token}}
+
+### Multiply by zero
+GET http://127.0.0.1:8000/multiply/5/0
+Authorization: Bearer {{token}}
+
+### ── Divide ──
+
+### Divide
+GET http://127.0.0.1:8000/divide/10/4
+Authorization: Bearer {{token}}
+
+### Divide by zero (expects 400)
+GET http://127.0.0.1:8000/divide/5/0
+Authorization: Bearer {{token}}
+
+### ── Edge cases ──
+
+### No authentication (expects 401)
+GET http://127.0.0.1:8000/add/1/2
+
+### Invalid token (expects 401)
+GET http://127.0.0.1:8000/add/1/2
+Authorization: Bearer invalid-token
+
+### Invalid input: string (expects 422)
+GET http://127.0.0.1:8000/add/abc/5
+Authorization: Bearer {{token}}

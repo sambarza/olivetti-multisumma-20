@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv init:*)",
+      "Bash(uv add:*)",
+      "Bash(uv run:*)",
+      "Bash(uv version:*)",
+      "Bash(uv help:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:www.ebay.it)",
+      "Bash(curl -sO \"https://i.ebayimg.com/images/g/ytsAAeSwT45ozjUe/s-l1600.jpg\" -o olivetti-1.jpg)",
+      "Bash(curl -sO \"https://i.ebayimg.com/images/g/Hi8AAeSwgBVozjUj/s-l1600.jpg\" -o olivetti-2.jpg)",
+      "Bash(curl -sO \"https://i.ebayimg.com/images/g/BOUAAeSwRhJozjUp/s-l1600.jpg\" -o olivetti-3.jpg)",
+      "Bash(curl -sO \"https://i.ebayimg.com/images/g/P~4AAeSwbtFozjUv/s-l1600.jpg\" -o olivetti-4.jpg)",
+      "Bash(ls -la /Users/samuelebarzaghi/test/test-claude-code/static/*.jpg)",
+      "Bash(curl -s \"https://i.ebayimg.com/images/g/ytsAAeSwT45ozjUe/s-l1600.jpg\" -o olivetti-front.jpg)",
+      "Bash(curl -s \"https://i.ebayimg.com/images/g/Hi8AAeSwgBVozjUj/s-l1600.jpg\" -o olivetti-2.jpg)",
+      "Bash(curl -s \"https://i.ebayimg.com/images/g/BOUAAeSwRhJozjUp/s-l1600.jpg\" -o olivetti-3.jpg)",
+      "Bash(curl -s \"https://i.ebayimg.com/images/g/P~4AAeSwbtFozjUv/s-l1600.jpg\" -o olivetti-4.jpg)",
+      "Bash(curl -s \"https://i.ebayimg.com/images/g/M4IAAeSwjB5ozjUz/s-l1600.jpg\" -o olivetti-5.jpg)",
+      "Bash(curl -s \"https://i.ebayimg.com/images/g/Z38AAeSwD5pozjU6/s-l1600.jpg\" -o olivetti-6.jpg)",
+      "Bash(ls -la *.jpg)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/samuelebarzaghi/test/test-claude-code/static/olivetti-front.jpg)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -L -o /Users/samuelebarzaghi/test/test-claude-code/static/olivetti-front.jpg \"https://images.sbito.it/api/v1/sbt-ads-images-pro/images/5d/5df9ccec-7c25-4ffc-a751-1470a5b06500?rule=gallery-desktop-2x-auto\")"
+    ]
+  }
+}
