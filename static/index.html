@@ -458,6 +458,35 @@
             scrollToBottom(false);
         }
 
+        /** Animate digits appearing one by one in fixed positions, then call callback. */
+        function typeDigits(text, cb) {
+            ensureLine();
+            var valSpan = activeLine.querySelector(".r-val");
+            /* Pre-fill with invisible characters to reserve space */
+            valSpan.innerHTML = "";
+            var spans = [];
+            for (var j = 0; j < text.length; j++) {
+                var ch = document.createElement("span");
+                ch.textContent = text[j];
+                ch.style.visibility = "hidden";
+                valSpan.appendChild(ch);
+                spans.push(ch);
+            }
+            scrollToBottom(false);
+            var i = 0;
+            function typeNext() {
+                if (i < spans.length) {
+                    spans[i].style.visibility = "visible";
+                    sndClick();
+                    i++;
+                    setTimeout(typeNext, 30);
+                } else {
+                    if (cb) cb();
+                }
+            }
+            typeNext();
+        }
+
         /** Finalize the active line with an operation symbol and roll the paper. */
         function finalizeLine(symbol, isTotal) {
             if (!activeLine) return;
@@ -568,68 +597,80 @@
                 else currentInput += d;
             }
             updateDisplay(currentInput);
-            printDigits(currentInput);
         }
 
         function pressOp(op, e) {
-            sndClick(); sndPrint();
+            sndPrint();
             if (e) flashBtn(e.target || e);
             var v = parseFloat(currentInput);
             if (pendingOp !== null && !freshInput) {
-                finalizeLine(sym[pendingOp], false);
-                callAPI(pendingOp, pendingValue, v, function(r) {
-                    pendingValue = r; pendingOp = op;
-                    currentInput = String(r); freshInput = true;
-                    updateDisplay(fmt(r));
+                typeDigits(currentInput, function() {
+                    finalizeLine(sym[pendingOp], false);
+                    callAPI(pendingOp, pendingValue, v, function(r) {
+                        pendingValue = r; pendingOp = op;
+                        currentInput = String(r); freshInput = true;
+                        updateDisplay(fmt(r));
+                    });
                 });
             } else {
-                finalizeLine(sym[op], false);
-                pendingValue = v; pendingOp = op; freshInput = true;
+                typeDigits(currentInput, function() {
+                    finalizeLine(sym[op], false);
+                    pendingValue = v; pendingOp = op; freshInput = true;
+                });
             }
         }
 
         function pressEquals(e) {
-            sndClick(); sndPrint();
+            sndPrint();
             if (e) flashBtn(e.target || e);
             if (!pendingOp) return;
             var v = parseFloat(currentInput);
-            finalizeLine(sym[pendingOp], false);
-            callAPI(pendingOp, pendingValue, v, function(r) {
-                printDigits(fmt(r));
-                finalizeLine("=", true);
-                sndBell();
-                pendingValue = null; pendingOp = null;
-                currentInput = String(r); freshInput = true;
+            typeDigits(currentInput, function() {
+                finalizeLine(sym[pendingOp], false);
+                callAPI(pendingOp, pendingValue, v, function(r) {
+                    typeDigits(fmt(r), function() {
+                        finalizeLine("=", true);
+                        sndBell();
+                        pendingValue = null; pendingOp = null;
+                        currentInput = String(r); freshInput = true;
+                    });
+                });
             });
         }
 
         function pressSubtotal(e) {
-            sndClick(); sndPrint();
+            sndPrint();
             if (e) flashBtn(e.target || e);
             if (!pendingOp) return;
             var v = parseFloat(currentInput);
-            finalizeLine(sym[pendingOp], false);
-            callAPI(pendingOp, pendingValue, v, function(r) {
-                printDigits(fmt(r));
-                finalizeLine("\u25c7", true);
-                sndBell();
-                pendingValue = r; pendingOp = null;
-                currentInput = String(r); freshInput = true;
+            typeDigits(currentInput, function() {
+                finalizeLine(sym[pendingOp], false);
+                callAPI(pendingOp, pendingValue, v, function(r) {
+                    typeDigits(fmt(r), function() {
+                        finalizeLine("\u25c7", true);
+                        sndBell();
+                        pendingValue = r; pendingOp = null;
+                        currentInput = String(r); freshInput = true;
+                    });
+                });
             });
         }
 
         function pressTotal(e) {
-            sndClick(); sndPrint();
+            sndPrint();
             if (e) flashBtn(e.target || e);
             if (pendingOp !== null && !freshInput) {
                 var v = parseFloat(currentInput);
-                finalizeLine(sym[pendingOp], false);
-                callAPI(pendingOp, pendingValue, v, function(r) {
-                    printDigits(fmt(r));
-                    finalizeLine("*", true);
-                    sndBell();
-                    pendingValue = null; pendingOp = null;
-                    currentInput = String(r); freshInput = true;
+                typeDigits(currentInput, function() {
+                    finalizeLine(sym[pendingOp], false);
+                    callAPI(pendingOp, pendingValue, v, function(r) {
+                        typeDigits(fmt(r), function() {
+                            finalizeLine("*", true);
+                            sndBell();
+                            pendingValue = null; pendingOp = null;
+                            currentInput = String(r); freshInput = true;
+                        });
+                    });
                 });
             } else {
                 finalizeLine("*", true);
