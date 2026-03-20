@@ -163,11 +163,11 @@
   ],
   "receipt": {
     "left": 34.46,
-    "top": 10.37,
-    "width": 20.84,
-    "height": 18.1,
-    "clipTopLeft": 12.2,
-    "clipTopRight": 2.6,
-    "rollerZone": 16.9
+    "top": 11.15,
+    "width": 20.63,
+    "height": 17.38,
+    "clipTopLeft": 8.5,
+    "clipTopRight": 0,
+    "rollerZone": 14.1
   }
 }

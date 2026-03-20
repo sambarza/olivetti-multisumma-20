@@ -63,9 +63,8 @@
             overflow: hidden;
             /* Height of the visible paper area in the photo */
             height: 12%;
-            /* Angled top edge — paper going over the roller at a tilt */
-            clip-path: polygon(0% 20%, 100% 8%, 100% 100%, 0% 100%);
         }
+
 
         .receipt {
             background: transparent;
@@ -530,19 +529,20 @@
             if (target < 0) target = 0;
             if (!animate) {
                 container.scrollTop = target;
+                applyRollerEffect();
                 return;
             }
             var start = container.scrollTop;
             var diff = target - start;
-            if (diff <= 0) return;
+            if (diff <= 0) { applyRollerEffect(); return; }
             var startTime = null;
             function frame(time) {
                 if (!startTime) startTime = time;
                 var progress = Math.min((time - startTime) / 300, 1);
                 var eased = 1 - Math.pow(1 - progress, 3);
                 container.scrollTop = start + diff * eased;
-                applyRollerEffect();
                 if (progress < 1) requestAnimationFrame(frame);
+                else applyRollerEffect();
             }
             requestAnimationFrame(frame);
         }
@@ -553,17 +553,28 @@
             var lines = document.querySelectorAll("#receipt .r-line");
             var containerRect = container.getBoundingClientRect();
             var rollerPct = parseFloat(container.dataset.rollerZone || 35);
-            var clipZone = containerRect.height * rollerPct / 100;
+            var rollerY = containerRect.height * rollerPct / 100;
+            /* Clip line is the average of clipTopLeft and clipTopRight */
+            var cp = getComputedStyle(container).clipPath;
+            var clipTop = 0;
+            if (cp && cp.indexOf("polygon") !== -1) {
+                var nums = cp.match(/[\d.]+%/g);
+                if (nums && nums.length >= 4) {
+                    clipTop = (parseFloat(nums[1]) + parseFloat(nums[3])) / 2;
+                }
+            }
+            var clipY = containerRect.height * clipTop / 100;
+            var zoneHeight = rollerY - clipY; // compression happens between clip line and roller line
 
             lines.forEach(function(line) {
                 var lineRect = line.getBoundingClientRect();
                 var lineTop = lineRect.top - containerRect.top;
 
-                if (lineTop < clipZone) {
-                    // How deep into the curve zone (1 = at very top, 0 = at edge)
-                    var t = Math.max(0, 1 - lineTop / clipZone);
-                    var sy = 1 - t * 0.7;        // compress to 30% height at top
-                    var op = 1 - t * 0.8;         // fade to 20% opacity at top
+                if (lineTop < rollerY && zoneHeight > 0) {
+                    // t=1 at clip line (fully compressed), t=0 at roller line
+                    var t = Math.max(0, Math.min(1, (rollerY - lineTop) / zoneHeight));
+                    var sy = 1 - t * 0.85;       // compress to 15% height at top
+                    var op = 1 - t * 0.9;         // fade to 10% opacity at top
                     line.style.transform = "scaleY(" + sy.toFixed(3) + ")";
                     line.style.transformOrigin = "bottom";
                     line.style.opacity = op.toFixed(3);
@@ -577,8 +588,6 @@
         /** Animate the paper rolling upward by one line. */
         function rollPaper() {
             scrollToBottom(true);
-            // Apply roller effect after scroll animation
-            setTimeout(applyRollerEffect, 320);
         }
 
         /* ══════════════════════════════════════════════════════════
@@ -767,7 +776,21 @@
                             rc.style.height = receipt.height + "%";
                             var clipL = receipt.clipTopLeft || 0;
                             var clipR = receipt.clipTopRight || 0;
-                            rc.style.clipPath = "polygon(0% " + clipL + "%, 100% " + clipR + "%, 100% 100%, 0% 100%)";
+                            /* Use clip-path on inner receipt overlay, not container */
+                            var overlay = rc.querySelector(".receipt-clip-overlay");
+                            if (!overlay) {
+                                overlay = document.createElement("div");
+                                overlay.className = "receipt-clip-overlay";
+                                rc.appendChild(overlay);
+                            }
+                            /* The overlay covers the top with the photo, creating the angled edge */
+                            overlay.style.cssText =
+                                "position:absolute;top:0;left:0;right:0;z-index:20;pointer-events:none;" +
+                                "background-image:url(olivetti-front.jpg);" +
+                                "background-size:" + (100 / (receipt.width / 100)) + "% " + (100 / (receipt.height / 100)) + "%;" +
+                                "background-position:" + (-receipt.left / receipt.width * 100) + "% " + (-receipt.top / receipt.height * 100) + "%;" +
+                                "height:100%;" +
+                                "clip-path:polygon(0% 0%, 100% 0%, 100% " + clipR + "%, 0% " + clipL + "%);";
                             rc.dataset.rollerZone = receipt.rollerZone || 35;
                         }
                     }
