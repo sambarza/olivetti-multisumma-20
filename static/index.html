@@ -102,6 +102,12 @@
 
         .r-line.r-total {
             font-weight: 700;
+            color: #742121;
+        }
+
+        .r-line.r-total .r-val,
+        .r-line.r-total .r-op {
+            color: #742121;
         }
 
 
@@ -669,6 +675,8 @@
                 digitCount = 0;
             } else {
                 if (d === "." && currentInput.indexOf(".") !== -1) return;
+                var numDigits = currentInput.replace(/\D/g, "").length;
+                if (d !== "." && numDigits >= 9) return;
                 if (currentInput === "0" && d !== ".") currentInput = d;
                 else currentInput += d;
             }
