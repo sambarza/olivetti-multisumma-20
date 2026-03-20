@@ -233,6 +233,40 @@
             pointer-events: none;
             white-space: nowrap;
         }
+        /* Receipt cover overlay */
+        .cfg-cover {
+            position: absolute;
+            border: 2px solid #f00;
+            background: rgba(255, 0, 0, 0.12);
+            cursor: move;
+            z-index: 8;
+            user-select: none;
+        }
+
+        .cfg-cover .resize-handle {
+            position: absolute;
+            right: -4px;
+            bottom: -4px;
+            width: 12px;
+            height: 12px;
+            background: #f00;
+            cursor: nwse-resize;
+            border-radius: 1px;
+        }
+
+        .cfg-cover .label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 9px;
+            font-weight: 700;
+            color: #f00;
+            text-shadow: 0 0 3px #000, 0 0 6px #000;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
         /* Marker sample crosshair — shows where the photo is sampled for the marker texture */
         .cfg-marker-sample {
             position: absolute;
@@ -300,7 +334,7 @@
     </div>
 
     <div class="info">Drag buttons to move. Drag bottom-right corner to resize. Arrow keys for fine-tuning (hold Shift for size).<br>
-    Cyan box = receipt area. Magenta dots = top clip edge. Yellow box = digit counter. Orange crosshair = marker texture sample point.</div>
+    Cyan box = receipt area. Magenta dots = top clip edge. Yellow box = digit counter. Orange crosshair = marker texture sample. Red box = receipt cover.</div>
     <div class="toolbar">
         <button class="save-btn" onclick="savePositions()">Save</button>
         <button class="reset-btn" onclick="resetPositions()">Reset to defaults</button>
@@ -359,6 +393,10 @@
             sampleX: 22, sampleY: 52.5
         };
 
+        var COVER_DEFAULT = {
+            left: 30, top: 26, width: 25, height: 4
+        };
+
         var wrapper = document.getElementById("wrapper");
         var selectedBtn = null;
 
@@ -372,24 +410,27 @@
                     var d = (data && data.buttons && data.buttons.length === DEFAULTS.length)
                        ? data : migrateOldFormat(data);
                     if (!d.counter) d.counter = Object.assign({}, COUNTER_DEFAULT);
+                    if (!d.cover) d.cover = Object.assign({}, COVER_DEFAULT);
                     cb(d);
                 })
                 .catch(function() {
                     cb({ buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
                          receipt: Object.assign({}, RECEIPT_DEFAULT),
-                         counter: Object.assign({}, COUNTER_DEFAULT) });
+                         counter: Object.assign({}, COUNTER_DEFAULT),
+                         cover: Object.assign({}, COVER_DEFAULT) });
                 });
         }
 
         /* Handle old format (array of buttons) */
         function migrateOldFormat(data) {
             if (Array.isArray(data) && data.length === DEFAULTS.length) {
-                return { buttons: data, receipt: Object.assign({}, RECEIPT_DEFAULT), counter: Object.assign({}, COUNTER_DEFAULT) };
+                return { buttons: data, receipt: Object.assign({}, RECEIPT_DEFAULT), counter: Object.assign({}, COUNTER_DEFAULT), cover: Object.assign({}, COVER_DEFAULT) };
             }
             return {
                 buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
                 receipt: Object.assign({}, RECEIPT_DEFAULT),
-                counter: Object.assign({}, COUNTER_DEFAULT)
+                counter: Object.assign({}, COUNTER_DEFAULT),
+                cover: Object.assign({}, COVER_DEFAULT)
             };
         }
 
@@ -427,11 +468,19 @@
                 sampleY: parseFloat(sample.dataset.sampleY)
             };
 
+            var cvr = document.querySelector(".cfg-cover");
+            var cover = {
+                left:   parseFloat(cvr.style.left),
+                top:    parseFloat(cvr.style.top),
+                width:  parseFloat(cvr.style.width),
+                height: parseFloat(cvr.style.height)
+            };
+
             if (!idToken) { alert("Please sign in first"); return; }
             fetch("/api/layout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + idToken },
-                body: JSON.stringify({ buttons: buttons, receipt: receipt, counter: counter })
+                body: JSON.stringify({ buttons: buttons, receipt: receipt, counter: counter, cover: cover })
             }).then(function(r) {
                 if (!r.ok) { alert("Save failed — check authentication"); return; }
                 var s = document.getElementById("status");
@@ -445,7 +494,8 @@
             var data = {
                 buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
                 receipt: Object.assign({}, RECEIPT_DEFAULT),
-                counter: Object.assign({}, COUNTER_DEFAULT)
+                counter: Object.assign({}, COUNTER_DEFAULT),
+                cover: Object.assign({}, COVER_DEFAULT)
             };
             fetch("/api/layout", {
                 method: "POST",
@@ -460,6 +510,8 @@
                 if (oldCnt) oldCnt.remove();
                 var oldSample = document.querySelector(".cfg-marker-sample");
                 if (oldSample) oldSample.remove();
+                var oldCover = document.querySelector(".cfg-cover");
+                if (oldCover) oldCover.remove();
                 buildAll(data);
             });
         }
@@ -731,6 +783,51 @@
             wrapper.appendChild(cross);
         }
 
+        /* ══════════════════════════════════════════════════════════
+           BUILD RECEIPT COVER OVERLAY
+           ══════════════════════════════════════════════════════════ */
+        function buildCover(cover) {
+            var el = document.createElement("div");
+            el.className = "cfg-cover";
+            el.style.left   = cover.left + "%";
+            el.style.top    = cover.top + "%";
+            el.style.width  = cover.width + "%";
+            el.style.height = cover.height + "%";
+
+            var label = document.createElement("div");
+            label.className = "label";
+            label.textContent = "COVER";
+            el.appendChild(label);
+
+            var resizeH = document.createElement("div");
+            resizeH.className = "resize-handle";
+            el.appendChild(resizeH);
+
+            el.addEventListener("mousedown", function(e) {
+                if (e.target === resizeH) return;
+                e.preventDefault();
+                startDrag(el, e);
+                updateCoverInfo(el);
+            });
+
+            resizeH.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startResize(el, e);
+                updateCoverInfo(el);
+            });
+
+            wrapper.appendChild(el);
+        }
+
+        function updateCoverInfo(el) {
+            var info = document.getElementById("selected-info");
+            info.textContent = "COVER — left:" + parseFloat(el.style.left).toFixed(1) +
+                "% top:" + parseFloat(el.style.top).toFixed(1) +
+                "% w:" + parseFloat(el.style.width).toFixed(1) +
+                "% h:" + parseFloat(el.style.height).toFixed(1) + "%";
+        }
+
         function startMarkerSampleDrag(el, e) {
             var rect = wrapper.getBoundingClientRect();
             var startX = e.clientX, startY = e.clientY;
@@ -798,6 +895,7 @@
             var origTop  = parseFloat(el.style.top);
             var isReceipt = el.classList.contains("cfg-receipt");
             var isCounter = el.classList.contains("cfg-counter");
+            var isCover = el.classList.contains("cfg-cover");
 
             function onMove(e2) {
                 var dx = (e2.clientX - startX) / rect.width * 100;
@@ -806,6 +904,7 @@
                 el.style.top  = (origTop + dy).toFixed(2) + "%";
                 if (isReceipt) updateReceiptInfo(el);
                 else if (isCounter) updateCounterInfo(el);
+                else if (isCover) updateCoverInfo(el);
                 else updateInfo();
             }
 
@@ -828,6 +927,7 @@
             var origH = parseFloat(el.style.height);
             var isReceipt = el.classList.contains("cfg-receipt");
             var isCounter = el.classList.contains("cfg-counter");
+            var isCover = el.classList.contains("cfg-cover");
 
             function onMove(e2) {
                 var dw = (e2.clientX - startX) / rect.width * 100;
@@ -839,6 +939,8 @@
                     updateReceiptInfo(el);
                 } else if (isCounter) {
                     updateCounterInfo(el);
+                } else if (isCover) {
+                    updateCoverInfo(el);
                 } else {
                     updateInfo();
                 }
@@ -889,6 +991,7 @@
             buildButtons(data.buttons);
             buildReceipt(data.receipt);
             buildCounter(data.counter || COUNTER_DEFAULT);
+            buildCover(data.cover || COVER_DEFAULT);
         }
 
         loadPositions(buildAll);

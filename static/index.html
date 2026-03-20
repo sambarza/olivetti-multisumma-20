@@ -132,6 +132,20 @@
 
 
         /* ══════════════════════════════════════════════════════════
+           RECEIPT COVER — hides text behind plastic
+           Positioned over the receipt area with photo background
+           to blend seamlessly with the machine
+           ══════════════════════════════════════════════════════════ */
+        .receipt-cover {
+            position: absolute;
+            z-index: 11;
+            pointer-events: none;
+            background-image: url('olivetti-front.jpg');
+            background-size: var(--machine-w) var(--machine-h);
+            background-position: var(--cover-bg-x) var(--cover-bg-y);
+        }
+
+        /* ══════════════════════════════════════════════════════════
            DIGIT COUNTER — small line in the display window
            Slides left as digits are entered, resets on result
            ══════════════════════════════════════════════════════════ */
@@ -282,6 +296,9 @@
         <div class="digit-counter">
             <div class="marker" id="digit-marker"></div>
         </div>
+
+        <!-- ════ RECEIPT COVER — hides text behind plastic ════ -->
+        <div class="receipt-cover" id="receipt-cover"></div>
 
         <!-- ════ PAPER RECEIPT — comes out of the printer ════ -->
         <div class="receipt-container">
@@ -833,6 +850,24 @@
             if (handled) e.preventDefault();
         });
 
+        /** Position the cover's background to sample from the photo at its exact location. */
+        function updateCoverBg(cv) {
+            var img = document.querySelector(".machine-photo");
+            if (!img || !cv) return;
+            var wW = img.offsetWidth;
+            var wH = img.offsetHeight;
+            cv.style.setProperty("--machine-w", wW + "px");
+            cv.style.setProperty("--machine-h", wH + "px");
+            cv.style.setProperty("--cover-bg-x", (-cv.offsetLeft) + "px");
+            cv.style.setProperty("--cover-bg-y", (-cv.offsetTop) + "px");
+        }
+
+        /* Recalculate on resize */
+        window.addEventListener("resize", function() {
+            var cv = document.getElementById("receipt-cover");
+            if (cv) updateCoverBg(cv);
+        });
+
         /* ══════════════════════════════════════════════════════════
            WIRE UP onclick TO PASS EVENT FOR FLASH EFFECT
            ══════════════════════════════════════════════════════════ */
@@ -892,6 +927,19 @@
                             rc.dataset.rollerZone = receipt.rollerZone || 35;
                         }
                     }
+                    /* Apply receipt cover */
+                    var cover = saved.cover || null;
+                    if (cover) {
+                        var cv = document.getElementById("receipt-cover");
+                        if (cv) {
+                            cv.style.left   = cover.left + "%";
+                            cv.style.top    = cover.top + "%";
+                            cv.style.width  = cover.width + "%";
+                            cv.style.height = cover.height + "%";
+                            updateCoverBg(cv);
+                        }
+                    }
+
                     /* Apply digit counter position and marker sample */
                     if (counter) {
                         var dc = document.querySelector(".digit-counter");

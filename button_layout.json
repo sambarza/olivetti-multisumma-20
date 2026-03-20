@@ -177,5 +177,11 @@
     "height": 2.19,
     "sampleX": 34.71,
     "sampleY": 55.31
+  },
+  "cover": {
+    "left": 34.38,
+    "top": 22.1,
+    "width": 21.88,
+    "height": 1.5
   }
 }
