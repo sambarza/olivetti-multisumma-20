@@ -455,6 +455,7 @@
         function printDigits(text) {
             ensureLine();
             activeLine.querySelector(".r-val").textContent = text;
+            scrollToBottom(false);
         }
 
         /** Finalize the active line with an operation symbol and roll the paper. */
