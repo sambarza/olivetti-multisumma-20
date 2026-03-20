@@ -3,9 +3,9 @@
     "id": "7",
     "label": "7",
     "left": 43.84,
-    "top": 54.97,
+    "top": 54.66,
     "width": 4.63,
-    "height": 3.37
+    "height": 2.9
   },
   {
     "id": "8",
@@ -130,10 +130,10 @@
   {
     "id": "equals",
     "label": "=",
-    "left": 22.42,
-    "top": 62.56,
-    "width": 4.58,
-    "height": 4.72
+    "left": 22,
+    "top": 62.4,
+    "width": 4.79,
+    "height": 4.25
   },
   {
     "id": "multiply",
