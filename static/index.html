@@ -54,7 +54,7 @@
         .receipt-container {
             position: absolute;
             /* Centered on the printer roller slot */
-            top: 16%;
+            top: 14.5%;
             left: 28%;
             width: 30%;
             z-index: 10;
@@ -62,7 +62,7 @@
             /* Fixed visible window — paper scrolls behind this */
             overflow: hidden;
             /* Height of the visible paper area in the photo */
-            height: 12%;
+            height: 13.5%;
         }
 
         .receipt {
@@ -101,16 +101,7 @@
         }
 
         .r-line.r-total {
-            border-top: 1px solid #444;
             font-weight: 700;
-            margin-top: 2px;
-            padding-top: 2px;
-        }
-
-        .r-line.r-total .r-val {
-            text-decoration: underline;
-            text-decoration-style: double;
-            text-underline-offset: 3px;
         }
 
 
@@ -597,7 +588,6 @@
                 sndBell();
                 pendingValue = null; pendingOp = null;
                 currentInput = String(r); freshInput = true;
-                updateDisplay(fmt(r));
             });
         }
 
@@ -613,7 +603,6 @@
                 sndBell();
                 pendingValue = r; pendingOp = null;
                 currentInput = String(r); freshInput = true;
-                updateDisplay(fmt(r));
             });
         }
 
@@ -629,7 +618,6 @@
                     sndBell();
                     pendingValue = null; pendingOp = null;
                     currentInput = String(r); freshInput = true;
-                    updateDisplay(fmt(r));
                 });
             } else {
                 finalizeLine("*", true);
