@@ -52,25 +52,25 @@ def verify_google_token(
 
 
 @app.get("/add/{a}/{b}")
-def add(a: float, b: float, user: dict = Depends(verify_google_token)) -> dict:
+def add(a: float, b: float) -> dict:
     """Return the sum of two numbers."""
     return {"a": a, "b": b, "operation": "add", "result": a + b}
 
 
 @app.get("/subtract/{a}/{b}")
-def subtract(a: float, b: float, user: dict = Depends(verify_google_token)) -> dict:
+def subtract(a: float, b: float) -> dict:
     """Return the difference of two numbers."""
     return {"a": a, "b": b, "operation": "subtract", "result": a - b}
 
 
 @app.get("/multiply/{a}/{b}")
-def multiply(a: float, b: float, user: dict = Depends(verify_google_token)) -> dict:
+def multiply(a: float, b: float) -> dict:
     """Return the product of two numbers."""
     return {"a": a, "b": b, "operation": "multiply", "result": a * b}
 
 
 @app.get("/divide/{a}/{b}")
-def divide(a: float, b: float, user: dict = Depends(verify_google_token)) -> dict:
+def divide(a: float, b: float) -> dict:
     """Return the quotient of two numbers. Returns 400 if dividing by zero."""
     if b == 0:
         raise HTTPException(status_code=400, detail="Division by zero")
@@ -91,8 +91,10 @@ def get_layout():
 
 
 @app.post("/api/layout")
-async def save_layout(request: Request):
-    """Save the button layout to a JSON file."""
+async def save_layout(
+    request: Request, user: dict = Depends(verify_google_token)
+):
+    """Save the button layout to a JSON file. Requires authentication."""
     data = await request.json()
     LAYOUT_FILE.write_text(json.dumps(data, indent=2))
     return {"status": "ok"}

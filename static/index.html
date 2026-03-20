@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Olivetti Multisumma 20</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         /* ══════════════════════════════════════════════════════════
@@ -70,7 +69,7 @@
             background: transparent;
             padding: 0 12px;
             font-family: "Courier New", monospace;
-            font-size: 0.68em;
+            font-size: 0.48em;
             color: #222;
             pointer-events: auto;
         }
@@ -224,22 +223,9 @@
         <!-- The real photograph — the only visual base -->
         <img src="olivetti-front.jpg" alt="Olivetti Multisumma 20" class="machine-photo">
 
-        <!-- ════ LOGIN OVERLAY ════ -->
-        <div id="login-overlay">
-            <p>Sign in with Google<br>to use the calculator</p>
-            <div id="g_id_onload"
-                 data-client_id="408727797747-ujv91ko0jcj91v6n6rb9qkm2t33im60n.apps.googleusercontent.com"
-                 data-callback="onSignIn"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin" data-type="standard" data-size="large"></div>
-        </div>
-
-        <!-- ════ USER BAR ════ -->
-        <div id="user-bar"></div>
 
         <!-- ════ PAPER RECEIPT — comes out of the printer ════ -->
-        <div class="receipt-container calc-hidden">
+        <div class="receipt-container">
             <div class="receipt" id="receipt"></div>
         </div>
 
@@ -257,67 +243,67 @@
 
         <!-- ── Number keys (white) ── -->
         <!-- Row: 7 8 9 -->
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('7')"
+        <button class="btn btn-white" onclick="pressDigit('7')"
             style="left:38%; top:57%; width:6.5%; height:4%;" title="7"></button>
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('8')"
+        <button class="btn btn-white" onclick="pressDigit('8')"
             style="left:45%; top:57%; width:6.5%; height:4%;" title="8"></button>
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('9')"
+        <button class="btn btn-white" onclick="pressDigit('9')"
             style="left:52%; top:57%; width:6.5%; height:4%;" title="9"></button>
 
         <!-- Row: 4 5 6 -->
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('4')"
+        <button class="btn btn-white" onclick="pressDigit('4')"
             style="left:38%; top:62.5%; width:6.5%; height:4%;" title="4"></button>
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('5')"
+        <button class="btn btn-white" onclick="pressDigit('5')"
             style="left:45%; top:62.5%; width:6.5%; height:4%;" title="5"></button>
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('6')"
+        <button class="btn btn-white" onclick="pressDigit('6')"
             style="left:52%; top:62.5%; width:6.5%; height:4%;" title="6"></button>
 
         <!-- Row: 1 2 3 -->
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('1')"
+        <button class="btn btn-white" onclick="pressDigit('1')"
             style="left:38%; top:68%; width:6.5%; height:4%;" title="1"></button>
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('2')"
+        <button class="btn btn-white" onclick="pressDigit('2')"
             style="left:45%; top:68%; width:6.5%; height:4%;" title="2"></button>
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('3')"
+        <button class="btn btn-white" onclick="pressDigit('3')"
             style="left:52%; top:68%; width:6.5%; height:4%;" title="3"></button>
 
         <!-- Row: 0, 00, 000 -->
-        <button class="btn btn-white btn-hidden" onclick="pressDigit('0')"
+        <button class="btn btn-white" onclick="pressDigit('0')"
             style="left:38%; top:73%; width:6.5%; height:4%;" title="0"></button>
-        <button class="btn btn-hidden" onclick="pressDigit('00')"
+        <button class="btn" onclick="pressDigit('00')"
             style="left:45%; top:73%; width:6.5%; height:4%;" title="00"></button>
-        <button class="btn btn-hidden" onclick="pressDigit('000')"
+        <button class="btn" onclick="pressDigit('000')"
             style="left:52%; top:73%; width:6.5%; height:4%;" title="000"></button>
 
         <!-- ── Right side: − (red, tall) ── -->
-        <button class="btn btn-red btn-hidden" onclick="pressOp('subtract')"
+        <button class="btn btn-red" onclick="pressOp('subtract')"
             style="left:63%; top:56.5%; width:10%; height:10%;" title="subtract"></button>
 
         <!-- ── Right side: + (black, tall) ── -->
-        <button class="btn btn-hidden" onclick="pressOp('add')"
+        <button class="btn" onclick="pressOp('add')"
             style="left:63%; top:67.5%; width:10%; height:10%;" title="add"></button>
 
         <!-- ── Far right: ◇ (subtotal) ── -->
-        <button class="btn btn-hidden" onclick="pressSubtotal()"
+        <button class="btn" onclick="pressSubtotal()"
             style="left:74%; top:62%; width:6.5%; height:4.5%;" title="subtotal"></button>
 
         <!-- ── Far right: * (total) ── -->
-        <button class="btn btn-hidden" onclick="pressTotal()"
+        <button class="btn" onclick="pressTotal()"
             style="left:74%; top:73%; width:6.5%; height:4.5%;" title="total"></button>
 
         <!-- ── Left side: = (red pill button) ── -->
-        <button class="btn btn-red btn-hidden" onclick="pressEquals()"
+        <button class="btn btn-red" onclick="pressEquals()"
             style="left:12%; top:66%; width:10%; height:5.5%; border-radius:50%;" title="equals"></button>
 
         <!-- ── Left side: × (multiply) ── -->
-        <button class="btn btn-hidden" onclick="pressOp('multiply')"
+        <button class="btn" onclick="pressOp('multiply')"
             style="left:10%; top:72%; width:8%; height:4.5%;" title="multiply"></button>
 
         <!-- ── Left side: C (clear) ── -->
-        <button class="btn btn-hidden" onclick="pressClear()"
+        <button class="btn" onclick="pressClear()"
             style="left:19%; top:72%; width:8%; height:4.5%;" title="clear"></button>
 
         <!-- ── Left side: ÷ (divide) — mapped to toggle area ── -->
-        <button class="btn btn-hidden" onclick="pressOp('divide')"
+        <button class="btn" onclick="pressOp('divide')"
             style="left:16%; top:59.5%; width:7%; height:5%;" title="divide"></button>
 
     </div>
@@ -432,34 +418,10 @@
            STATE
            ══════════════════════════════════════════════════════════ */
         var API_URL = window.location.origin;
-        var idToken = null;
         var currentInput = "0";
         var pendingOp = null;
         var pendingValue = null;
         var freshInput = true;
-
-        /* ══════════════════════════════════════════════════════════
-           GOOGLE SIGN-IN
-           ══════════════════════════════════════════════════════════ */
-        function onSignIn(response) {
-            idToken = response.credential;
-            var payload = JSON.parse(atob(idToken.split(".")[1]));
-            showCalculator(payload.email);
-        }
-
-        function showCalculator(email) {
-            document.getElementById("login-overlay").style.display = "none";
-            var bar = document.getElementById("user-bar");
-            bar.style.display = "block";
-            bar.textContent = email || "test mode";
-
-            document.querySelectorAll(".calc-hidden").forEach(function(el) {
-                el.classList.remove("calc-hidden");
-            });
-            document.querySelectorAll(".btn-hidden").forEach(function(el) {
-                el.classList.remove("btn-hidden");
-            });
-        }
 
 
         /* ══════════════════════════════════════════════════════════
@@ -541,8 +503,8 @@
                 var progress = Math.min((time - startTime) / 300, 1);
                 var eased = 1 - Math.pow(1 - progress, 3);
                 container.scrollTop = start + diff * eased;
+                applyRollerEffect();
                 if (progress < 1) requestAnimationFrame(frame);
-                else applyRollerEffect();
             }
             requestAnimationFrame(frame);
         }
@@ -688,7 +650,7 @@
            ══════════════════════════════════════════════════════════ */
         function callAPI(op, a, b, cb) {
             fetch(API_URL + "/" + op + "/" + a + "/" + b, {
-                headers: { "Authorization": "Bearer " + idToken }
+                headers: {}
             })
             .then(function(r) {
                 return r.json().then(function(d) {
@@ -711,7 +673,6 @@
            ══════════════════════════════════════════════════════════ */
         document.addEventListener("keydown", function(e) {
             if (e.repeat) return;
-            if (!idToken) return;
             var handled = true;
             if (e.key >= "0" && e.key <= "9") { flashByTitle(e.key); pressDigit(e.key); }
             else if (e.key === "." || e.key === ",") { pressDigit("."); }
@@ -776,21 +737,10 @@
                             rc.style.height = receipt.height + "%";
                             var clipL = receipt.clipTopLeft || 0;
                             var clipR = receipt.clipTopRight || 0;
-                            /* Use clip-path on inner receipt overlay, not container */
-                            var overlay = rc.querySelector(".receipt-clip-overlay");
-                            if (!overlay) {
-                                overlay = document.createElement("div");
-                                overlay.className = "receipt-clip-overlay";
-                                rc.appendChild(overlay);
-                            }
-                            /* The overlay covers the top with the photo, creating the angled edge */
-                            overlay.style.cssText =
-                                "position:absolute;top:0;left:0;right:0;z-index:20;pointer-events:none;" +
-                                "background-image:url(olivetti-front.jpg);" +
-                                "background-size:" + (100 / (receipt.width / 100)) + "% " + (100 / (receipt.height / 100)) + "%;" +
-                                "background-position:" + (-receipt.left / receipt.width * 100) + "% " + (-receipt.top / receipt.height * 100) + "%;" +
-                                "height:100%;" +
-                                "clip-path:polygon(0% 0%, 100% 0%, 100% " + clipR + "%, 0% " + clipL + "%);";
+                            /* Clip-path on container for angled top edge */
+                            var cp = "polygon(0% " + clipL + "%, 100% " + clipR + "%, 100% 100%, 0% 100%)";
+                            rc.style.clipPath = cp;
+                            rc.style.webkitClipPath = cp;
                             rc.dataset.rollerZone = receipt.rollerZone || 35;
                         }
                     }
