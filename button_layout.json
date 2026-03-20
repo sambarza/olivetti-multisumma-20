@@ -1,162 +1,173 @@
-[
-  {
-    "id": "7",
-    "label": "7",
-    "left": 43.84,
-    "top": 54.66,
-    "width": 4.63,
-    "height": 2.9
-  },
-  {
-    "id": "8",
-    "label": "8",
-    "left": 50.83,
-    "top": 54.81,
-    "width": 4.62,
-    "height": 2.9
-  },
-  {
-    "id": "9",
-    "label": "9",
-    "left": 57.62,
-    "top": 54.81,
-    "width": 4.42,
-    "height": 3.06
-  },
-  {
-    "id": "4",
-    "label": "4",
-    "left": 44.05,
-    "top": 59.69,
-    "width": 4.21,
-    "height": 3.06
-  },
-  {
-    "id": "5",
-    "label": "5",
-    "left": 51.04,
-    "top": 59.53,
-    "width": 4.83,
-    "height": 3.06
-  },
-  {
-    "id": "6",
-    "label": "6",
-    "left": 57.63,
-    "top": 59.37,
-    "width": 4.42,
-    "height": 3.21
-  },
-  {
-    "id": "1",
-    "label": "1",
-    "left": 43.84,
-    "top": 64.71,
-    "width": 4.83,
-    "height": 3.38
-  },
-  {
-    "id": "2",
-    "label": "2",
-    "left": 51.04,
-    "top": 64.71,
-    "width": 4.83,
-    "height": 3.37
-  },
-  {
-    "id": "3",
-    "label": "3",
-    "left": 58.26,
-    "top": 64.56,
-    "width": 4.63,
-    "height": 3.22
-  },
-  {
-    "id": "0",
-    "label": "0",
-    "left": 38.84,
-    "top": 69.71,
-    "width": 9.84,
-    "height": 3.53
-  },
-  {
-    "id": "00",
-    "label": "00",
-    "left": 51.05,
-    "top": 69.72,
-    "width": 5.25,
-    "height": 3.06
-  },
-  {
-    "id": "000",
-    "label": "000",
-    "left": 58.67,
-    "top": 69.24,
-    "width": 4.63,
-    "height": 3.38
-  },
-  {
-    "id": "subtract",
-    "label": "\u2212",
-    "left": 65.91,
-    "top": 53.85,
-    "width": 13.75,
-    "height": 3.57
-  },
-  {
-    "id": "add",
-    "label": "+",
-    "left": 67.17,
-    "top": 59.04,
-    "width": 6.88,
-    "height": 15.18
-  },
-  {
-    "id": "subtotal",
-    "label": "\u25c7",
-    "left": 76.5,
-    "top": 61.38,
-    "width": 4.83,
-    "height": 4.34
-  },
-  {
-    "id": "total",
-    "label": "*",
-    "left": 77.13,
-    "top": 67.05,
-    "width": 4.83,
-    "height": 7.17
-  },
-  {
-    "id": "equals",
-    "label": "=",
-    "left": 22,
-    "top": 62.4,
-    "width": 4.79,
-    "height": 4.25
-  },
-  {
-    "id": "multiply",
-    "label": "\u00d7",
-    "left": 21.88,
-    "top": 68.55,
-    "width": 5.09,
-    "height": 5.28
-  },
-  {
-    "id": "clear",
-    "label": "C",
-    "left": 30.04,
-    "top": 70.28,
-    "width": 5.71,
-    "height": 3.25
-  },
-  {
-    "id": "divide",
-    "label": "\u00f7",
-    "left": 22.04,
-    "top": 58.56,
-    "width": 2.21,
-    "height": 3.43
+{
+  "buttons": [
+    {
+      "id": "7",
+      "label": "7",
+      "left": 43.84,
+      "top": 54.66,
+      "width": 4.63,
+      "height": 2.9
+    },
+    {
+      "id": "8",
+      "label": "8",
+      "left": 50.83,
+      "top": 54.81,
+      "width": 4.62,
+      "height": 2.9
+    },
+    {
+      "id": "9",
+      "label": "9",
+      "left": 57.62,
+      "top": 54.81,
+      "width": 4.42,
+      "height": 3.06
+    },
+    {
+      "id": "4",
+      "label": "4",
+      "left": 44.05,
+      "top": 59.69,
+      "width": 4.21,
+      "height": 3.06
+    },
+    {
+      "id": "5",
+      "label": "5",
+      "left": 51.04,
+      "top": 59.53,
+      "width": 4.83,
+      "height": 3.06
+    },
+    {
+      "id": "6",
+      "label": "6",
+      "left": 57.63,
+      "top": 59.37,
+      "width": 4.42,
+      "height": 3.21
+    },
+    {
+      "id": "1",
+      "label": "1",
+      "left": 43.84,
+      "top": 64.71,
+      "width": 4.83,
+      "height": 3.38
+    },
+    {
+      "id": "2",
+      "label": "2",
+      "left": 51.04,
+      "top": 64.71,
+      "width": 4.83,
+      "height": 3.37
+    },
+    {
+      "id": "3",
+      "label": "3",
+      "left": 58.26,
+      "top": 64.56,
+      "width": 4.63,
+      "height": 3.22
+    },
+    {
+      "id": "0",
+      "label": "0",
+      "left": 38.84,
+      "top": 69.71,
+      "width": 9.84,
+      "height": 3.53
+    },
+    {
+      "id": "00",
+      "label": "00",
+      "left": 51.05,
+      "top": 69.72,
+      "width": 5.25,
+      "height": 3.06
+    },
+    {
+      "id": "000",
+      "label": "000",
+      "left": 58.67,
+      "top": 69.24,
+      "width": 4.63,
+      "height": 3.38
+    },
+    {
+      "id": "subtract",
+      "label": "\u2212",
+      "left": 65.91,
+      "top": 53.85,
+      "width": 13.75,
+      "height": 3.57
+    },
+    {
+      "id": "add",
+      "label": "+",
+      "left": 67.17,
+      "top": 59.04,
+      "width": 6.88,
+      "height": 15.18
+    },
+    {
+      "id": "subtotal",
+      "label": "\u25c7",
+      "left": 76.5,
+      "top": 61.38,
+      "width": 4.83,
+      "height": 4.34
+    },
+    {
+      "id": "total",
+      "label": "*",
+      "left": 77.13,
+      "top": 67.05,
+      "width": 4.83,
+      "height": 7.17
+    },
+    {
+      "id": "equals",
+      "label": "=",
+      "left": 22,
+      "top": 62.4,
+      "width": 4.79,
+      "height": 4.25
+    },
+    {
+      "id": "multiply",
+      "label": "\u00d7",
+      "left": 21.88,
+      "top": 68.55,
+      "width": 5.09,
+      "height": 5.28
+    },
+    {
+      "id": "clear",
+      "label": "C",
+      "left": 30.04,
+      "top": 70.28,
+      "width": 5.71,
+      "height": 3.25
+    },
+    {
+      "id": "divide",
+      "label": "\u00f7",
+      "left": 22.04,
+      "top": 58.56,
+      "width": 2.21,
+      "height": 3.43
+    }
+  ],
+  "receipt": {
+    "left": 34.46,
+    "top": 10.37,
+    "width": 20.84,
+    "height": 18.1,
+    "clipTopLeft": 12.2,
+    "clipTopRight": 2.6,
+    "rollerZone": 16.9
   }
-]
+}

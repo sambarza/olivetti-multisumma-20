@@ -123,11 +123,89 @@
         }
 
         .cfg-btn.selected .resize-handle { background: #ff0; }
+
+        /* Receipt container overlay */
+        .cfg-receipt {
+            position: absolute;
+            border: 2px solid cyan;
+            background: rgba(0, 255, 255, 0.08);
+            cursor: move;
+            z-index: 8;
+            user-select: none;
+        }
+
+        .cfg-receipt .resize-handle {
+            position: absolute;
+            right: -4px;
+            bottom: -4px;
+            width: 12px;
+            height: 12px;
+            background: cyan;
+            cursor: nwse-resize;
+            border-radius: 1px;
+        }
+
+        /* Top-left and top-right clip handles */
+        .cfg-receipt .clip-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #f0f;
+            cursor: ns-resize;
+            border-radius: 50%;
+            z-index: 9;
+        }
+
+        .cfg-receipt .clip-handle.left { left: -6px; }
+        .cfg-receipt .clip-handle.right { right: -6px; }
+
+        .cfg-receipt .label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: 700;
+            color: cyan;
+            text-shadow: 0 0 3px #000, 0 0 6px #000;
+            pointer-events: none;
+        }
+
+        /* Dashed line showing the clip angle */
+        .cfg-receipt .clip-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 2px dashed #f0f;
+            pointer-events: none;
+            transform-origin: left;
+        }
+
+        /* Roller zone line — where compression starts */
+        .cfg-receipt .roller-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 2px dashed #0f0;
+            cursor: ns-resize;
+            z-index: 9;
+        }
+
+        .cfg-receipt .roller-label {
+            position: absolute;
+            right: -60px;
+            top: -8px;
+            font-size: 9px;
+            color: #0f0;
+            white-space: nowrap;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <h1>Button Layout Configuration</h1>
-    <div class="info">Drag buttons to move. Drag bottom-right corner to resize. Arrow keys for fine-tuning (hold Shift for size).</div>
+    <div class="info">Drag buttons to move. Drag bottom-right corner to resize. Arrow keys for fine-tuning (hold Shift for size).<br>
+    Cyan box = receipt area. Magenta dots = top clip edge (drag up/down to angle the paper cutoff).</div>
     <div class="toolbar">
         <button class="save-btn" onclick="savePositions()">Save</button>
         <button class="reset-btn" onclick="resetPositions()">Reset to defaults</button>
@@ -167,6 +245,12 @@
             { id: "divide",   label: "\u00f7",left: 16,  top: 59.5, width: 7,   height: 5 }
         ];
 
+        var RECEIPT_DEFAULT = {
+            left: 28, top: 16, width: 30, height: 12,
+            clipTopLeft: 20, clipTopRight: 8,
+            rollerZone: 35
+        };
+
         var wrapper = document.getElementById("wrapper");
         var selectedBtn = null;
 
@@ -177,16 +261,29 @@
             fetch("/api/layout")
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    cb(data && data.length === DEFAULTS.length ? data
-                       : DEFAULTS.map(function(d) { return Object.assign({}, d); }));
+                    cb(data && data.buttons && data.buttons.length === DEFAULTS.length
+                       ? data
+                       : migrateOldFormat(data));
                 })
                 .catch(function() {
-                    cb(DEFAULTS.map(function(d) { return Object.assign({}, d); }));
+                    cb({ buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
+                         receipt: Object.assign({}, RECEIPT_DEFAULT) });
                 });
         }
 
+        /* Handle old format (array of buttons) */
+        function migrateOldFormat(data) {
+            if (Array.isArray(data) && data.length === DEFAULTS.length) {
+                return { buttons: data, receipt: Object.assign({}, RECEIPT_DEFAULT) };
+            }
+            return {
+                buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
+                receipt: Object.assign({}, RECEIPT_DEFAULT)
+            };
+        }
+
         function savePositions() {
-            var data = Array.from(document.querySelectorAll(".cfg-btn")).map(function(el) {
+            var buttons = Array.from(document.querySelectorAll(".cfg-btn")).map(function(el) {
                 return {
                     id:     el.dataset.id,
                     label:  el.dataset.label,
@@ -196,10 +293,22 @@
                     height: parseFloat(el.style.height)
                 };
             });
+
+            var rcpt = document.querySelector(".cfg-receipt");
+            var receipt = {
+                left:         parseFloat(rcpt.style.left),
+                top:          parseFloat(rcpt.style.top),
+                width:        parseFloat(rcpt.style.width),
+                height:       parseFloat(rcpt.style.height),
+                clipTopLeft:  parseFloat(rcpt.dataset.clipLeft),
+                clipTopRight: parseFloat(rcpt.dataset.clipRight),
+                rollerZone:   parseFloat(rcpt.dataset.rollerZone)
+            };
+
             fetch("/api/layout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ buttons: buttons, receipt: receipt })
             }).then(function() {
                 var s = document.getElementById("status");
                 s.classList.add("show");
@@ -208,13 +317,19 @@
         }
 
         function resetPositions() {
+            var data = {
+                buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
+                receipt: Object.assign({}, RECEIPT_DEFAULT)
+            };
             fetch("/api/layout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(DEFAULTS)
+                body: JSON.stringify(data)
             }).then(function() {
                 document.querySelectorAll(".cfg-btn").forEach(function(el) { el.remove(); });
-                buildButtons(DEFAULTS.map(function(d) { return Object.assign({}, d); }));
+                var oldRcpt = document.querySelector(".cfg-receipt");
+                if (oldRcpt) oldRcpt.remove();
+                buildAll(data);
             });
         }
 
@@ -256,6 +371,176 @@
         }
 
         /* ══════════════════════════════════════════════════════════
+           BUILD RECEIPT OVERLAY
+           ══════════════════════════════════════════════════════════ */
+        function buildReceipt(rcpt) {
+            var el = document.createElement("div");
+            el.className = "cfg-receipt";
+            el.style.left   = rcpt.left + "%";
+            el.style.top    = rcpt.top + "%";
+            el.style.width  = rcpt.width + "%";
+            el.style.height = rcpt.height + "%";
+            el.dataset.clipLeft  = rcpt.clipTopLeft;
+            el.dataset.clipRight = rcpt.clipTopRight;
+            el.dataset.rollerZone = rcpt.rollerZone || 35;
+
+            // Label
+            var label = document.createElement("div");
+            label.className = "label";
+            label.textContent = "RECEIPT";
+            el.appendChild(label);
+
+            // Resize handle (bottom-right)
+            var resizeH = document.createElement("div");
+            resizeH.className = "resize-handle";
+            el.appendChild(resizeH);
+
+            // Clip handles (top-left, top-right)
+            var clipL = document.createElement("div");
+            clipL.className = "clip-handle left";
+            el.appendChild(clipL);
+
+            var clipR = document.createElement("div");
+            clipR.className = "clip-handle right";
+            el.appendChild(clipR);
+
+            // Clip line (visual indicator)
+            var clipLine = document.createElement("div");
+            clipLine.className = "clip-line";
+            el.appendChild(clipLine);
+
+            // Roller zone line (green dashed)
+            var rollerLine = document.createElement("div");
+            rollerLine.className = "roller-line";
+            var rollerLabel = document.createElement("span");
+            rollerLabel.className = "roller-label";
+            rollerLabel.textContent = "roller zone";
+            rollerLine.appendChild(rollerLabel);
+            el.appendChild(rollerLine);
+
+            updateClipHandles(el);
+            updateRollerLine(el);
+
+            // Drag to move
+            el.addEventListener("mousedown", function(e) {
+                if (e.target === resizeH || e.target === clipL || e.target === clipR || e.target === rollerLine) return;
+                e.preventDefault();
+                startDrag(el, e);
+            });
+
+            // Resize
+            resizeH.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startResize(el, e);
+            });
+
+            // Clip handle drag (top-left)
+            clipL.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startClipDrag(el, "left", e);
+            });
+
+            // Clip handle drag (top-right)
+            clipR.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startClipDrag(el, "right", e);
+            });
+
+            // Roller zone drag
+            rollerLine.addEventListener("mousedown", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                startRollerDrag(el, e);
+            });
+
+            wrapper.appendChild(el);
+        }
+
+        function updateRollerLine(el) {
+            var rz = parseFloat(el.dataset.rollerZone);
+            var line = el.querySelector(".roller-line");
+            if (line) line.style.top = rz + "%";
+        }
+
+        function startRollerDrag(el, e) {
+            var rect = el.getBoundingClientRect();
+            var startY = e.clientY;
+            var origVal = parseFloat(el.dataset.rollerZone);
+
+            function onMove(e2) {
+                var dy = (e2.clientY - startY) / rect.height * 100;
+                var newVal = Math.max(5, Math.min(80, origVal + dy));
+                el.dataset.rollerZone = newVal.toFixed(1);
+                updateRollerLine(el);
+                updateReceiptInfo(el);
+            }
+
+            function onUp() {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            }
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        }
+
+        function updateClipHandles(el) {
+            var clipLeft  = parseFloat(el.dataset.clipLeft);
+            var clipRight = parseFloat(el.dataset.clipRight);
+            var lHandle = el.querySelector(".clip-handle.left");
+            var rHandle = el.querySelector(".clip-handle.right");
+            var clipLine = el.querySelector(".clip-line");
+
+            lHandle.style.top = clipLeft + "%";
+            rHandle.style.top = clipRight + "%";
+
+            // Draw angled clip line
+            clipLine.style.top = clipLeft + "%";
+            var angleDeg = Math.atan2(
+                (clipRight - clipLeft) / 100 * el.offsetHeight,
+                el.offsetWidth
+            ) * 180 / Math.PI;
+            clipLine.style.transform = "rotate(" + angleDeg + "deg)";
+        }
+
+        function startClipDrag(el, side, e) {
+            var rect = el.getBoundingClientRect();
+            var startY = e.clientY;
+            var key = side === "left" ? "clipLeft" : "clipRight";
+            var origVal = parseFloat(el.dataset[key]);
+
+            function onMove(e2) {
+                var dy = (e2.clientY - startY) / rect.height * 100;
+                var newVal = Math.max(0, Math.min(50, origVal + dy));
+                el.dataset[key] = newVal.toFixed(1);
+                updateClipHandles(el);
+                updateReceiptInfo(el);
+            }
+
+            function onUp() {
+                document.removeEventListener("mousemove", onMove);
+                document.removeEventListener("mouseup", onUp);
+            }
+
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+        }
+
+        function updateReceiptInfo(el) {
+            var info = document.getElementById("selected-info");
+            info.textContent = "RECEIPT \u2014 left:" + parseFloat(el.style.left).toFixed(1) +
+                "% top:" + parseFloat(el.style.top).toFixed(1) +
+                "% w:" + parseFloat(el.style.width).toFixed(1) +
+                "% h:" + parseFloat(el.style.height).toFixed(1) +
+                "% clipL:" + parseFloat(el.dataset.clipLeft).toFixed(1) +
+                "% clipR:" + parseFloat(el.dataset.clipRight).toFixed(1) +
+                "% roller:" + parseFloat(el.dataset.rollerZone).toFixed(1) + "%";
+        }
+
+        /* ══════════════════════════════════════════════════════════
            SELECTION
            ══════════════════════════════════════════════════════════ */
         function selectBtn(el) {
@@ -284,13 +569,15 @@
             var startX = e.clientX, startY = e.clientY;
             var origLeft = parseFloat(el.style.left);
             var origTop  = parseFloat(el.style.top);
+            var isReceipt = el.classList.contains("cfg-receipt");
 
             function onMove(e2) {
                 var dx = (e2.clientX - startX) / rect.width * 100;
                 var dy = (e2.clientY - startY) / rect.height * 100;
                 el.style.left = (origLeft + dx).toFixed(2) + "%";
                 el.style.top  = (origTop + dy).toFixed(2) + "%";
-                updateInfo();
+                if (isReceipt) updateReceiptInfo(el);
+                else updateInfo();
             }
 
             function onUp() {
@@ -310,13 +597,19 @@
             var startX = e.clientX, startY = e.clientY;
             var origW = parseFloat(el.style.width);
             var origH = parseFloat(el.style.height);
+            var isReceipt = el.classList.contains("cfg-receipt");
 
             function onMove(e2) {
                 var dw = (e2.clientX - startX) / rect.width * 100;
                 var dh = (e2.clientY - startY) / rect.height * 100;
                 el.style.width  = Math.max(2, origW + dw).toFixed(2) + "%";
                 el.style.height = Math.max(1, origH + dh).toFixed(2) + "%";
-                updateInfo();
+                if (isReceipt) {
+                    updateClipHandles(el);
+                    updateReceiptInfo(el);
+                } else {
+                    updateInfo();
+                }
             }
 
             function onUp() {
@@ -360,7 +653,12 @@
         /* ══════════════════════════════════════════════════════════
            INIT
            ══════════════════════════════════════════════════════════ */
-        loadPositions(buildButtons);
+        function buildAll(data) {
+            buildButtons(data.buttons);
+            buildReceipt(data.receipt);
+        }
+
+        loadPositions(buildAll);
     </script>
 </body>
 </html>

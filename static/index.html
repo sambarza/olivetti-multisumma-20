@@ -54,7 +54,7 @@
         .receipt-container {
             position: absolute;
             /* Centered on the printer roller slot */
-            top: 13%;
+            top: 16%;
             left: 28%;
             width: 30%;
             z-index: 10;
@@ -62,7 +62,9 @@
             /* Fixed visible window — paper scrolls behind this */
             overflow: hidden;
             /* Height of the visible paper area in the photo */
-            height: 15%;
+            height: 12%;
+            /* Angled top edge — paper going over the roller at a tilt */
+            clip-path: polygon(0% 20%, 100% 8%, 100% 100%, 0% 100%);
         }
 
         .receipt {
@@ -539,14 +541,44 @@
                 var progress = Math.min((time - startTime) / 300, 1);
                 var eased = 1 - Math.pow(1 - progress, 3);
                 container.scrollTop = start + diff * eased;
+                applyRollerEffect();
                 if (progress < 1) requestAnimationFrame(frame);
             }
             requestAnimationFrame(frame);
         }
 
+        /** Apply roller curve effect — lines near the top compress and fade. */
+        function applyRollerEffect() {
+            var container = document.querySelector(".receipt-container");
+            var lines = document.querySelectorAll("#receipt .r-line");
+            var containerRect = container.getBoundingClientRect();
+            var rollerPct = parseFloat(container.dataset.rollerZone || 35);
+            var clipZone = containerRect.height * rollerPct / 100;
+
+            lines.forEach(function(line) {
+                var lineRect = line.getBoundingClientRect();
+                var lineTop = lineRect.top - containerRect.top;
+
+                if (lineTop < clipZone) {
+                    // How deep into the curve zone (1 = at very top, 0 = at edge)
+                    var t = Math.max(0, 1 - lineTop / clipZone);
+                    var sy = 1 - t * 0.7;        // compress to 30% height at top
+                    var op = 1 - t * 0.8;         // fade to 20% opacity at top
+                    line.style.transform = "scaleY(" + sy.toFixed(3) + ")";
+                    line.style.transformOrigin = "bottom";
+                    line.style.opacity = op.toFixed(3);
+                } else {
+                    line.style.transform = "";
+                    line.style.opacity = "";
+                }
+            });
+        }
+
         /** Animate the paper rolling upward by one line. */
         function rollPaper() {
             scrollToBottom(true);
+            // Apply roller effect after scroll animation
+            setTimeout(applyRollerEffect, 320);
         }
 
         /* ══════════════════════════════════════════════════════════
@@ -705,18 +737,40 @@
             fetch("/api/layout")
                 .then(function(r) { return r.json(); })
                 .then(function(saved) {
-                    if (!saved || !saved.length) return;
-                    var btns = document.querySelectorAll(".btn");
-                    var byId = {};
-                    btns.forEach(function(b) { byId[b.title.toLowerCase()] = b; });
-                    saved.forEach(function(pos) {
-                        var b = byId[pos.id.toLowerCase()];
-                        if (!b) return;
-                        b.style.left   = pos.left + "%";
-                        b.style.top    = pos.top + "%";
-                        b.style.width  = pos.width + "%";
-                        b.style.height = pos.height + "%";
-                    });
+                    if (!saved) return;
+                    /* Handle both old (array) and new ({buttons, receipt}) format */
+                    var buttons = Array.isArray(saved) ? saved : (saved.buttons || []);
+                    var receipt = saved.receipt || null;
+
+                    /* Apply button positions */
+                    if (buttons.length) {
+                        var btns = document.querySelectorAll(".btn");
+                        var byId = {};
+                        btns.forEach(function(b) { byId[b.title.toLowerCase()] = b; });
+                        buttons.forEach(function(pos) {
+                            var b = byId[pos.id.toLowerCase()];
+                            if (!b) return;
+                            b.style.left   = pos.left + "%";
+                            b.style.top    = pos.top + "%";
+                            b.style.width  = pos.width + "%";
+                            b.style.height = pos.height + "%";
+                        });
+                    }
+
+                    /* Apply receipt position and clip-path */
+                    if (receipt) {
+                        var rc = document.querySelector(".receipt-container");
+                        if (rc) {
+                            rc.style.left   = receipt.left + "%";
+                            rc.style.top    = receipt.top + "%";
+                            rc.style.width  = receipt.width + "%";
+                            rc.style.height = receipt.height + "%";
+                            var clipL = receipt.clipTopLeft || 0;
+                            var clipR = receipt.clipTopRight || 0;
+                            rc.style.clipPath = "polygon(0% " + clipL + "%, 100% " + clipR + "%, 100% 100%, 0% 100%)";
+                            rc.dataset.rollerZone = receipt.rollerZone || 35;
+                        }
+                    }
                 })
                 .catch(function() {});
         })();
