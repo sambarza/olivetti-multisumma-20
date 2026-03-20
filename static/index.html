@@ -507,20 +507,6 @@
             if (isTotal) setTimeout(sndBell, 120);
         }
 
-        /** Print a complete new line (for results). */
-        function printResultLine(value, symbol, isTotal) {
-            sndPrint();
-            var receipt = document.getElementById("receipt");
-            var line = document.createElement("div");
-            line.className = "r-line" + (isTotal ? " r-total" : "");
-            line.innerHTML =
-                '<span class="r-val">' + value + '</span>' +
-                '<span class="r-op">' + (symbol || "") + '</span>';
-            receipt.appendChild(line);
-            activeLine = null;
-            rollPaper();
-            if (isTotal) setTimeout(sndBell, 120);
-        }
 
         /** Add a spacer to push first line to bottom of visible area. */
         var spacerAdded = false;
@@ -606,7 +592,9 @@
             var v = parseFloat(currentInput);
             finalizeLine(sym[pendingOp], false);
             callAPI(pendingOp, pendingValue, v, function(r) {
-                printResultLine(fmt(r), "=", true);
+                printDigits(fmt(r));
+                finalizeLine("=", true);
+                sndBell();
                 pendingValue = null; pendingOp = null;
                 currentInput = String(r); freshInput = true;
                 updateDisplay(fmt(r));
@@ -620,7 +608,9 @@
             var v = parseFloat(currentInput);
             finalizeLine(sym[pendingOp], false);
             callAPI(pendingOp, pendingValue, v, function(r) {
-                printResultLine(fmt(r), "\u25c7", true);
+                printDigits(fmt(r));
+                finalizeLine("\u25c7", true);
+                sndBell();
                 pendingValue = r; pendingOp = null;
                 currentInput = String(r); freshInput = true;
                 updateDisplay(fmt(r));
@@ -634,7 +624,9 @@
                 var v = parseFloat(currentInput);
                 finalizeLine(sym[pendingOp], false);
                 callAPI(pendingOp, pendingValue, v, function(r) {
-                    printResultLine(fmt(r), "*", true);
+                    printDigits(fmt(r));
+                    finalizeLine("*", true);
+                    sndBell();
                     pendingValue = null; pendingOp = null;
                     currentInput = String(r); freshInput = true;
                     updateDisplay(fmt(r));
