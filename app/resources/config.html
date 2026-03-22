@@ -317,21 +317,9 @@
             text-shadow: 0 0 3px #000;
         }
     </style>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <h1>Button Layout Configuration</h1>
-
-    <!-- Login -->
-    <div id="login-section" style="text-align:center; margin-bottom:10px;">
-        <div id="g_id_onload"
-             data-client_id="408727797747-ujv91ko0jcj91v6n6rb9qkm2t33im60n.apps.googleusercontent.com"
-             data-callback="onConfigSignIn"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin" data-type="standard" data-size="medium"></div>
-        <div id="user-info" style="font-size:0.75em; color:#8f8; margin-top:4px;"></div>
-    </div>
 
     <div class="info">Drag buttons to move. Drag bottom-right corner to resize. Arrow keys for fine-tuning (hold Shift for size).<br>
     Cyan box = receipt area. Magenta dots = top clip edge. Yellow box = digit counter. Orange crosshair = marker texture sample. Red box = receipt cover.</div>
@@ -348,14 +336,6 @@
     </div>
 
     <script>
-        var idToken = null;
-
-        function onConfigSignIn(response) {
-            idToken = response.credential;
-            var payload = JSON.parse(atob(idToken.split(".")[1]));
-            document.getElementById("user-info").textContent = "Logged in as " + payload.email;
-        }
-
         /* ══════════════════════════════════════════════════════════
            DEFAULT BUTTON DEFINITIONS
            ══════════════════════════════════════════════════════════ */
@@ -403,9 +383,17 @@
         /* ══════════════════════════════════════════════════════════
            LOAD / SAVE — via server API
            ══════════════════════════════════════════════════════════ */
+        /* ── CSRF token helper ── */
+        function fetchCsrfToken(cb) {
+            fetch('/api/', { method: 'HEAD', headers: { 'X-CSRF-Token': 'Fetch' } })
+                .then(function(r) { cb(r.headers.get('X-CSRF-Token') || ''); })
+                .catch(function() { cb(''); });
+        }
+
         function loadPositions(cb) {
-            fetch("/api/layout")
+            fetch("/api/getLayout()")
                 .then(function(r) { return r.json(); })
+                .then(function(d) { return d.value ? JSON.parse(d.value) : null; })
                 .then(function(data) {
                     var d = (data && data.buttons && data.buttons.length === DEFAULTS.length)
                        ? data : migrateOldFormat(data);
@@ -476,33 +464,35 @@
                 height: parseFloat(cvr.style.height)
             };
 
-            if (!idToken) { alert("Please sign in first"); return; }
-            fetch("/api/layout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + idToken },
-                body: JSON.stringify({ buttons: buttons, receipt: receipt, counter: counter, cover: cover })
-            }).then(function(r) {
-                if (!r.ok) { alert("Save failed — check authentication"); return; }
-                var s = document.getElementById("status");
-                s.classList.add("show");
-                setTimeout(function() { s.classList.remove("show"); }, 1500);
+            var payload = JSON.stringify({ buttons: buttons, receipt: receipt, counter: counter, cover: cover });
+            fetchCsrfToken(function(csrf) {
+                fetch("/api/saveLayout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+                    body: JSON.stringify({ data: payload })
+                }).then(function(r) {
+                    if (!r.ok) { alert("Save failed"); return; }
+                    var s = document.getElementById("status");
+                    s.classList.add("show");
+                    setTimeout(function() { s.classList.remove("show"); }, 1500);
+                });
             });
         }
 
         function resetPositions() {
-            if (!idToken) { alert("Please sign in first"); return; }
             var data = {
                 buttons: DEFAULTS.map(function(d) { return Object.assign({}, d); }),
                 receipt: Object.assign({}, RECEIPT_DEFAULT),
                 counter: Object.assign({}, COUNTER_DEFAULT),
                 cover: Object.assign({}, COVER_DEFAULT)
             };
-            fetch("/api/layout", {
+            fetchCsrfToken(function(csrf) {
+            fetch("/api/saveLayout", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + idToken },
-                body: JSON.stringify(data)
+                headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+                body: JSON.stringify({ data: JSON.stringify(data) })
             }).then(function(r) {
-                if (!r.ok) { alert("Reset failed — check authentication"); return; }
+                if (!r.ok) { alert("Reset failed"); return; }
                 document.querySelectorAll(".cfg-btn").forEach(function(el) { el.remove(); });
                 var oldRcpt = document.querySelector(".cfg-receipt");
                 if (oldRcpt) oldRcpt.remove();
@@ -514,6 +504,7 @@
                 if (oldCover) oldCover.remove();
                 buildAll(data);
             });
+            }); // fetchCsrfToken
         }
 
         /* ══════════════════════════════════════════════════════════

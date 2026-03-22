@@ -1,24 +1,20 @@
 # Python
 __pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-build/
-wheels/
-
-# Virtual environments
+*.pyc
 .venv/
-venv/
 
-# IDE
-.vscode/
-.idea/
+# CAP build output
+gen/
+node_modules/
 
-# OS
-.DS_Store
+# Sensitive files
+*.env
+*.key
+*.pem
 
-# Environment
-.env
+# SAP BTP deployment archives
+*.mtar
 
-# pytest
-.pytest_cache/
+# Local SQLite DB (dev only)
+*.db
+*.db-journal
