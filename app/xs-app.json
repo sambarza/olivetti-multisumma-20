@@ -3,15 +3,25 @@
   "authenticationMethod": "route",
   "routes": [
     {
-      "source": "^/api/(.*)$",
+      "source": "^/config.html$",
+      "localDir": "resources",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^/api/saveLayout",
       "destination": "srv-api",
       "authenticationType": "xsuaa",
       "csrfProtection": true
     },
     {
+      "source": "^/api/(.*)$",
+      "destination": "srv-api",
+      "authenticationType": "none"
+    },
+    {
       "source": "^/(.*)$",
       "localDir": "resources",
-      "authenticationType": "xsuaa"
+      "authenticationType": "none"
     }
   ]
 }

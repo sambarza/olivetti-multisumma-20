@@ -23,6 +23,14 @@
         "[production]": {
           "kind": "hana"
         }
+      },
+      "auth": {
+        "restrict-all-services": false,
+        "[production]": {
+          "kind": "xsuaa",
+          "restrict-all-services": false,
+          "unauthenticated": true
+        }
       }
     }
   }

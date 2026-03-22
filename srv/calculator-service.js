@@ -20,6 +20,7 @@ module.exports = cds.service.impl(async function () {
 
   /* ── Layout: write (requires authentication) ── */
   this.on('saveLayout', async req => {
+    if (req.user._is_anonymous) return req.error(401, 'Login required');
     const { Layout } = cds.entities('olivetti');
     const exists = await SELECT.one.from(Layout).where({ ID: 1 });
     if (exists) {
