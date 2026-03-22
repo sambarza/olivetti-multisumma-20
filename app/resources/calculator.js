@@ -52,6 +52,14 @@ function pressEquals(e) {
     sndClick();
     if (e) flashBtn(e.target || e);
     if (!pendingOp) return;
+    if (freshInput) {
+        typeDigits(fmt(pendingValue), function() {
+            finalizeLine("=", true);
+            currentInput = String(pendingValue);
+            pendingValue = null; pendingOp = null; freshInput = true;
+        });
+        return;
+    }
     var v = parseFloat(currentInput);
     typeDigits(currentInput, function() {
         finalizeLine(sym[pendingOp], false);
