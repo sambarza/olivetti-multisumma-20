@@ -18,10 +18,11 @@ function pressDigit(d, e) {
         if (d === "." && currentInput.indexOf(".") !== -1) return;
         var numDigits = currentInput.replace(/\D/g, "").length;
         if (d !== "." && numDigits >= 9) return;
+        if (d !== "." && numDigits + d.length > 9) d = d.slice(0, 9 - numDigits);
         if (currentInput === "0" && d !== ".") currentInput = d;
         else currentInput += d;
     }
-    digitCount++;
+    digitCount += (d === "." ? 0 : d.length);
     updateDigitMarker();
     updateDisplay(currentInput);
 }
