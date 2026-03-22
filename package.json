@@ -10,6 +10,7 @@
   "dependencies": {
     "@sap/cds": "^8",
     "@sap/cds-hana": "^2",
+    "@sap/xssec": "^4",
     "express": "^4"
   },
   "devDependencies": {

@@ -14,5 +14,10 @@
       "description": "Can configure the calculator layout",
       "scope-references": ["$XSAPPNAME.admin"]
     }
-  ]
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://30fb9128trial-dev-olivetti-calculator-app.cfapps.us10-001.hana.ondemand.com/login/callback"
+    ]
+  }
 }
