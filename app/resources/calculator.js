@@ -112,7 +112,7 @@ function pressTotal(e) {
 }
 
 function pressClear(e) {
-    sndClick(); sndCarriage();
+    sndClick();
     if (e) flashBtn(e.target || e);
     currentInput = "0"; freshInput = true;
     pendingOp = null; pendingValue = null;
