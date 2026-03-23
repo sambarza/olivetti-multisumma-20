@@ -8,12 +8,11 @@ A faithful web recreation of the **Olivetti Multisumma 20**, a classic Italian a
 
 ## Built with Claude Code
 
-This project was built entirely through a conversation with **[Claude Code](https://claude.ai/claude-code)** (Anthropic's AI coding assistant) as an experiment to see how far a real-world full-stack project could go with AI-assisted development — from a blank repo to a live cloud application with Google OAuth, without writing a single line of code manually.
+This project was built entirely through a conversation with **[Claude Code](https://claude.ai/claude-code)** (Anthropic's AI coding assistant) as an experiment to see how far a real-world full-stack project could go with AI-assisted development — **from zero idea to a live cloud application with Google OAuth in about 8 hours**, without writing a single line of code manually.
 
 Here's what we tackled together across the sessions:
 
 - **Frontend** — pixel-accurate button overlays on a real machine photo, live paper receipt with typewriter ink effect, sliding digit counter, sound effects, keyboard support, responsive font sizing with CSS container queries
-- **Bug fixes** — `00`/`000` digit counter moving by 1 instead of 2/3, `1+1+=4` arithmetic bug, unwanted sound on Clear key, receipt font shrinking before the paper
 - **Architecture migration** — moved from a local FastAPI/Python backend to SAP CAP (Node.js) to deploy on SAP BTP with HANA Cloud
 - **Cloud deployment** — full MTA setup (CAP backend + HANA DB deployer + Approuter), `mta.yaml`, `xs-security.json`, CF CLI deploy pipeline
 - **Auth debugging** — diagnosed why public API endpoints returned 401 even with `authenticationType: none` in the Approuter, traced it through CAP's `jwt-auth` middleware, `http.js` module-level `restrict_all_services` evaluation, and the runtime `requiresHandler`; fixed with `@requires: 'any'` on the service and `@requires: 'authenticated-user'` on the protected action
