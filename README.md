@@ -13,9 +13,8 @@ This project was built entirely through a conversation with **[Claude Code](http
 Here's what we tackled together across the sessions:
 
 - **Frontend** — pixel-accurate button overlays on a real machine photo, live paper receipt with typewriter ink effect, sliding digit counter, sound effects, keyboard support, responsive font sizing with CSS container queries
-- **Architecture migration** — moved from a local FastAPI/Python backend to SAP CAP (Node.js) to deploy on SAP BTP with HANA Cloud
+- **Architecture migration** — started with a Python/FastAPI backend (see the [`python-version`](../../tree/python-version) branch), then migrated to SAP CAP (Node.js) to deploy on SAP BTP with HANA Cloud
 - **Cloud deployment** — full MTA setup (CAP backend + HANA DB deployer + Approuter), `mta.yaml`, `xs-security.json`, CF CLI deploy pipeline
-- **Auth debugging** — diagnosed why public API endpoints returned 401 even with `authenticationType: none` in the Approuter, traced it through CAP's `jwt-auth` middleware, `http.js` module-level `restrict_all_services` evaluation, and the runtime `requiresHandler`; fixed with `@requires: 'any'` on the service and `@requires: 'authenticated-user'` on the protected action
 - **Google OAuth** — wired up SAP IAS as an identity broker between XSUAA and Google OAuth, including BTP trust configuration and IAS social sign-in setup
 
 ---
