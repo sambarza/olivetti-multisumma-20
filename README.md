@@ -39,74 +39,18 @@ It started as a frontend experiment and grew into a full-stack cloud application
 - Sound effects play on key press and paper feed
 - The layout (button positions, receipt area, counter position) is fully configurable via a drag-and-drop config page and persisted to the cloud
 
-### Backend — SAP CAP (Cloud Application Programming Model)
+### Backend — SAP CAP + HANA Cloud + Google OAuth
 
-The backend is built with **SAP CAP** (Node.js), a framework by SAP for building enterprise-grade cloud services. It handles the OData V4 protocol, database access, and authorization automatically from a declarative model — you write `.cds` schema files and service definitions, and CAP generates the REST/OData layer, SQL, and auth middleware.
+The backend is a **SAP CAP** (Cloud Application Programming Model) service written in Node.js, deployed on **SAP BTP Cloud Foundry** with **HANA Cloud** as the database.
 
-The service is defined in a single `.cds` file:
+CAP exposes an OData V4 API — arithmetic operations are handled server-side (the machine does the math), and the button layout is persisted to HANA so it survives deployments. Public endpoints are open to everyone; saving the layout requires a Google login.
 
-```cds
-@path: '/api'
-@requires: 'any'
-service CalculatorService {
-  function add     (a : Decimal(20,8), b : Decimal(20,8)) returns Decimal(20,8);
-  function subtract(a : Decimal(20,8), b : Decimal(20,8)) returns Decimal(20,8);
-  function multiply(a : Decimal(20,8), b : Decimal(20,8)) returns Decimal(20,8);
-  function divide  (a : Decimal(20,8), b : Decimal(20,8)) returns Decimal(20,8);
-
-  function getLayout()                       returns LargeString;
-  @requires: 'authenticated-user'
-  action   saveLayout(data : LargeString)    returns Boolean;
-}
-```
-
-CAP exposes this as a standard OData V4 API:
-
-| Operation | Auth | Description |
-|---|---|---|
-| `GET /api/add(a=X,b=Y)` | public | Addition |
-| `GET /api/subtract(a=X,b=Y)` | public | Subtraction |
-| `GET /api/multiply(a=X,b=Y)` | public | Multiplication |
-| `GET /api/divide(a=X,b=Y)` | public | Division |
-| `GET /api/getLayout()` | public | Load saved layout from HANA |
-| `POST /api/saveLayout` | 🔒 login required | Persist layout to HANA |
-
-Arithmetic is intentionally handled server-side — the whole point is that the machine "does the math".
-
-The `@requires: 'any'` annotation on the service allows anonymous access (public users can call arithmetic and `getLayout`). The `@requires: 'authenticated-user'` on `saveLayout` is enforced by CAP's built-in authorization middleware, which runs a `before('*')` handler checking the annotation against the JWT token claims before the handler is ever reached.
-
-In development, CAP uses **SQLite** automatically. In production on BTP it switches to **HANA Cloud** via the `[production]` profile in `package.json` — same code, different database.
-
-### Database — SAP HANA Cloud
-
-Layout configuration is stored in a **HANA Cloud HDI (HANA Deployment Infrastructure) container**. CAP auto-generates the HANA table definitions (`.hdbtable` artifacts) from the CDS schema at build time and deploys them via a dedicated `db-deployer` Cloud Foundry task that runs on each `cf deploy`.
-
-The schema is minimal by design:
-
-```cds
-namespace olivetti;
-entity Layout {
-  key ID       : Integer default 1;
-      layoutData : LargeString;
-}
-```
-
-A single row (ID = 1) stores the full layout as a JSON string. There is no user-specific layout — everyone sees the same configuration, only authenticated users can change it.
-
-### Authentication — XSUAA + SAP IAS + Google OAuth
-
-The config page (`/config.html`) is protected. The full auth chain is:
-
+The auth chain is:
 ```
 Browser → SAP Approuter → XSUAA → SAP IAS → Google OAuth
 ```
 
-- **SAP Approuter** — the entry point for all traffic. It enforces route-level auth rules defined in `xs-app.json`: `/api/saveLayout` and `/config.html` require XSUAA authentication, everything else is public. It manages the user session and injects the JWT token into backend requests.
-- **XSUAA** (Authorization and Trust Management Service) — the OAuth2 authorization server on BTP. It issues JWT tokens scoped to the application and delegates authentication to IAS.
-- **SAP IAS** (Identity Authentication Service) — the identity broker. It handles the actual login UI and federates to external identity providers. Configured here to offer Google as a social sign-in option.
-- **Google OAuth** — the final identity provider. Users authenticate with their Google account; IAS receives the identity and issues a SAML/OIDC assertion back to XSUAA, which mints the final JWT.
-
-Public users can use the calculator freely. Only authenticated users (via Google login) can save layout changes.
+Same code runs locally on SQLite with zero config, and on HANA Cloud in production — CAP switches automatically.
 
 ---
 
