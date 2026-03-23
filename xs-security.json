@@ -1,0 +1,23 @@
+{
+  "xsappname": "olivetti-calculator",
+  "tenant-mode": "dedicated",
+  "description": "Olivetti Multisumma 20 Calculator",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.admin",
+      "description": "Save and reset layout configuration"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Admin",
+      "description": "Can configure the calculator layout",
+      "scope-references": ["$XSAPPNAME.admin"]
+    }
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://30fb9128trial-dev-olivetti-calculator-app.cfapps.us10-001.hana.ondemand.com/login/callback"
+    ]
+  }
+}

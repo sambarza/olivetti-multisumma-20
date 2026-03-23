@@ -1,0 +1,12 @@
+{
+  "name": "olivetti-calculator-app",
+  "version": "1.0.0",
+  "description": "Olivetti Calculator Frontend + Approuter",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node node_modules/@sap/approuter/approuter.js"
+  },
+  "dependencies": {
+    "@sap/approuter": "^16"
+  }
+}

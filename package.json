@@ -1,0 +1,37 @@
+{
+  "name": "olivetti-calculator",
+  "version": "1.0.0",
+  "description": "Olivetti Multisumma 20 Calculator",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "cds-serve",
+    "dev": "cds watch"
+  },
+  "dependencies": {
+    "@sap/cds": "^8",
+    "@sap/cds-hana": "^2",
+    "@sap/xssec": "^4",
+    "express": "^4"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^1"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "[production]": {
+          "kind": "hana"
+        }
+      },
+      "auth": {
+        "restrict-all-services": false,
+        "[production]": {
+          "kind": "xsuaa",
+          "restrict-all-services": false,
+          "unauthenticated": true
+        }
+      }
+    }
+  }
+}

@@ -18,10 +18,11 @@ function pressDigit(d, e) {
         if (d === "." && currentInput.indexOf(".") !== -1) return;
         var numDigits = currentInput.replace(/\D/g, "").length;
         if (d !== "." && numDigits >= 9) return;
+        if (d !== "." && numDigits + d.length > 9) d = d.slice(0, 9 - numDigits);
         if (currentInput === "0" && d !== ".") currentInput = d;
         else currentInput += d;
     }
-    digitCount++;
+    digitCount += (d === "." ? 0 : d.length);
     updateDigitMarker();
     updateDisplay(currentInput);
 }
@@ -51,6 +52,14 @@ function pressEquals(e) {
     sndClick();
     if (e) flashBtn(e.target || e);
     if (!pendingOp) return;
+    if (freshInput) {
+        typeDigits(fmt(pendingValue), function() {
+            finalizeLine("=", true);
+            currentInput = String(pendingValue);
+            pendingValue = null; pendingOp = null; freshInput = true;
+        });
+        return;
+    }
     var v = parseFloat(currentInput);
     typeDigits(currentInput, function() {
         finalizeLine(sym[pendingOp], false);
@@ -103,7 +112,7 @@ function pressTotal(e) {
 }
 
 function pressClear(e) {
-    sndClick(); sndCarriage();
+    sndClick();
     if (e) flashBtn(e.target || e);
     currentInput = "0"; freshInput = true;
     pendingOp = null; pendingValue = null;

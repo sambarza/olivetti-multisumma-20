@@ -1,0 +1,80 @@
+_schema-version: "3.1"
+ID: olivetti-calculator
+version: 1.0.0
+description: Olivetti Multisumma 20 Calculator
+
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+
+modules:
+
+  # ── CAP Backend ──────────────────────────────────────────
+  - name: olivetti-calculator-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+      disk-quota: 512M
+    build-parameters:
+      builder: npm-ci
+    provides:
+      - name: srv-api
+        properties:
+          url: ${default-url}
+    requires:
+      - name: olivetti-hana
+      - name: olivetti-xsuaa
+
+  # ── HANA DB deployer ─────────────────────────────────────
+  - name: olivetti-calculator-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+      disk-quota: 512M
+    requires:
+      - name: olivetti-hana
+
+  # ── Approuter + Frontend ─────────────────────────────────
+  - name: olivetti-calculator-app
+    type: approuter.nodejs
+    path: app
+    parameters:
+      memory: 128M
+      disk-quota: 256M
+    build-parameters:
+      builder: npm-ci
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv-api
+          url: ~{url}
+          forwardAuthToken: true
+      - name: olivetti-xsuaa
+
+resources:
+
+  # ── SAP HANA Cloud ───────────────────────────────────────
+  - name: olivetti-hana
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+
+  # ── XSUAA ────────────────────────────────────────────────
+  - name: olivetti-xsuaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: olivetti-calculator
+        tenant-mode: dedicated
